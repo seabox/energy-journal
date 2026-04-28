@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Energy Journal</title>
+  <meta name="description" content="Track energy and fatigue, sync to OneDrive, and get practical insights.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Serif:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <div class="bg-shape bg-shape-a" aria-hidden="true"></div>
+  <div class="bg-shape bg-shape-b" aria-hidden="true"></div>
+
+  <header class="hero panel reveal">
+    <p class="eyebrow">Energy Journal</p>
+    <h1>Capture Your Day. Understand Your Fatigue.</h1>
+    <p class="sub">Simple daily tracking with practical insight cards and OneDrive sync.</p>
+    <div class="hero-actions">
+      <button id="connect-onedrive" class="btn btn-primary">Connect OneDrive</button>
+      <button id="sync-now" class="btn btn-ghost" disabled>Sync Now</button>
+      <button id="export-csv" class="btn btn-ghost">Export CSV</button>
+    </div>
+    <p id="sync-status" class="status">Not connected.</p>
+  </header>
+
+  <main class="grid">
+    <section class="panel reveal" aria-labelledby="entry-title">
+      <h2 id="entry-title">Daily Entry</h2>
+      <form id="entry-form" class="form-grid">
+        <label>Date<input type="date" name="date" required></label>
+        <label>Fatigue (0-10)
+          <div class="slider-row">
+            <input type="range" name="fatigue" min="0" max="10" step="1" value="1" data-slider required>
+            <span class="slider-value">1</span>
+          </div>
+        </label>
+        <label>Exercise Mins<input type="number" name="exerciseMins" min="0"></label>
+        <label>Exercise Type<input type="text" name="exerciseType" placeholder="Walk, Mowing..."></label>
+        <label>Day Nap
+          <select name="dayNap">
+            <option value="">-</option>
+            <option value="Y">Yes</option>
+            <option value="N">No</option>
+          </select>
+        </label>
+        <label>Mood Awareness<input type="text" name="moodAwareness"></label>
+        <label>Mood<input type="text" name="mood"></label>
+        <fieldset class="full platter-group">
+          <legend>Healthy Mind Platter</legend>
+          <div class="platter-grid">
+            <label>Sleep Quality (0-10)
+              <div class="slider-row">
+                <input type="range" name="sleepQuality" min="0" max="10" step="1" value="9" data-slider>
+                <span class="slider-value">9</span>
+              </div>
+            </label>
+            <label>Focus (0-10)
+              <div class="slider-row">
+                <input type="range" name="focus" min="0" max="10" step="1" value="1" data-slider>
+                <span class="slider-value">1</span>
+              </div>
+            </label>
+            <label>Play (0-10)
+              <div class="slider-row">
+                <input type="range" name="play" min="0" max="10" step="1" value="1" data-slider>
+                <span class="slider-value">1</span>
+              </div>
+            </label>
+            <label>Connecting (0-10)
+              <div class="slider-row">
+                <input type="range" name="connecting" min="0" max="10" step="1" value="1" data-slider>
+                <span class="slider-value">1</span>
+              </div>
+            </label>
+            <label>Physical (0-10)
+              <div class="slider-row">
+                <input type="range" name="physical" min="0" max="10" step="1" value="1" data-slider>
+                <span class="slider-value">1</span>
+              </div>
+            </label>
+            <label>Reflect (0-10)
+              <div class="slider-row">
+                <input type="range" name="reflect" min="0" max="10" step="1" value="1" data-slider>
+                <span class="slider-value">1</span>
+              </div>
+            </label>
+            <label>Down (0-10)
+              <div class="slider-row">
+                <input type="range" name="down" min="0" max="10" step="1" value="1" data-slider>
+                <span class="slider-value">1</span>
+              </div>
+            </label>
+          </div>
+        </fieldset>
+        <label class="full">Notes<textarea name="notes" rows="3"></textarea></label>
+        <div class="form-actions full">
+          <button type="submit" class="btn btn-primary">Save Entry</button>
+          <button id="clear-form" type="button" class="btn btn-ghost">Clear</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel reveal" aria-labelledby="insights-title">
+      <h2 id="insights-title">Fatigue Insights</h2>
+      <div id="insights-cards" class="insights"></div>
+      <p id="insights-narrative" class="narrative"></p>
+    </section>
+
+    <section class="panel panel-wide reveal" aria-labelledby="history-title">
+      <div class="section-head">
+        <h2 id="history-title">Recent Entries</h2>
+        <label class="import-wrap">Import CSV<input id="import-csv" type="file" accept=".csv"></label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Fatigue</th>
+              <th>Sleep</th>
+              <th>Exercise</th>
+              <th>Mood</th>
+              <th>Focus</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="entries-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
