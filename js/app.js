@@ -1,7 +1,7 @@
 import { loadEntries, saveEntries } from "./storage-local.js";
 import { entriesToCsv, parseCsv } from "./csv.js";
 import { buildInsights } from "./insights.js";
-import { connectOneDrive, isConnected, pullFromOneDrive, syncToOneDrive } from "./onedrive.js";
+import { connectOneDrive, initOneDrive, isConnected, pullFromOneDrive, syncToOneDrive } from "./onedrive.js";
 import { isoDate, normalizeYN, sortEntriesByDateDesc, toNumberOrNull, uid } from "./utils.js";
 
 const form = document.querySelector("#entry-form");
@@ -36,6 +36,14 @@ bindSliderUpdates();
 refreshSliderDisplays();
 renderAll();
 refreshSyncState();
+
+// Process any pending redirect login response on every page load.
+initOneDrive().then((connected) => {
+  if (connected) {
+    refreshSyncState();
+    setStatus("Connected to OneDrive.");
+  }
+});
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -94,9 +102,9 @@ importInput.addEventListener("change", async (event) => {
 
 connectBtn.addEventListener("click", async () => {
   try {
+    setStatus("Redirecting to Microsoft sign-in...");
     await connectOneDrive();
-    refreshSyncState();
-    setStatus("Connected to OneDrive.");
+    // Page will navigate away — code below only runs if navigation is blocked.
   } catch (error) {
     setStatus(error.message || "OneDrive connection failed.", true);
   }

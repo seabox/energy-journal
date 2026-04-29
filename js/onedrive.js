@@ -3,6 +3,69 @@ import { ONEDRIVE_FILES } from "./constants.js";
 
 let msalClient;
 let account = null;
+let initPromise = null;
+let eventCallbackId = null;
+
+const msalDebug = {
+  enabled: true,
+  maxEntries: 300
+};
+
+function getMsalLogStore() {
+  if (!Array.isArray(window.__energyJournalMsalLog)) {
+    window.__energyJournalMsalLog = [];
+  }
+  return window.__energyJournalMsalLog;
+}
+
+function recordMsalLog(entry) {
+  if (!msalDebug.enabled) {
+    return;
+  }
+  const store = getMsalLogStore();
+  store.push({ at: new Date().toISOString(), ...entry });
+  if (store.length > msalDebug.maxEntries) {
+    store.splice(0, store.length - msalDebug.maxEntries);
+  }
+}
+
+function setupMsalDebugHooks(client) {
+  if (!msalDebug.enabled || eventCallbackId) {
+    return;
+  }
+
+  const logLevelMap = window.msal.LogLevel;
+  const logger = new window.msal.Logger({
+    logLevel: logLevelMap.Verbose,
+    piiLoggingEnabled: false,
+    loggerCallback(level, message, containsPii) {
+      if (containsPii) {
+        return;
+      }
+      const levelName = Object.keys(logLevelMap).find((key) => logLevelMap[key] === level) || String(level);
+      recordMsalLog({ type: "logger", level: levelName, message });
+      console.debug("[MSAL]", levelName, message);
+    }
+  });
+
+  client.setLogger(logger);
+  eventCallbackId = client.addEventCallback((event) => {
+    recordMsalLog({
+      type: "event",
+      eventType: event.eventType,
+      interactionType: event.interactionType || null,
+      correlationId: event.correlationId || null,
+      errorCode: event.error?.errorCode || event.errorCode || null,
+      errorMessage: event.error?.message || null
+    });
+    console.debug("[MSAL EVENT]", event.eventType, {
+      interactionType: event.interactionType || null,
+      correlationId: event.correlationId || null,
+      errorCode: event.error?.errorCode || event.errorCode || null,
+      errorMessage: event.error?.message || null
+    });
+  });
+}
 
 function ensureMsal() {
   if (!window.msal || !window.msal.PublicClientApplication) {
@@ -22,12 +85,36 @@ function ensureMsal() {
         cacheLocation: "localStorage"
       }
     });
+    setupMsalDebugHooks(msalClient);
   }
   return msalClient;
 }
 
-async function getAccessToken() {
+async function ensureMsalReady() {
   const client = ensureMsal();
+  if (!initPromise) {
+    initPromise = (async () => {
+      await client.initialize();
+      // Process any pending redirect response (e.g. returning from loginRedirect).
+      const redirectResponse = await client.handleRedirectPromise();
+      if (redirectResponse?.account) {
+        account = redirectResponse.account;
+      }
+      // Restore previously signed-in account from cache.
+      if (!account) {
+        const accounts = client.getAllAccounts();
+        if (accounts.length) {
+          account = accounts[0];
+        }
+      }
+    })();
+  }
+  await initPromise;
+  return client;
+}
+
+async function getAccessToken() {
+  const client = await ensureMsalReady();
   if (!account) {
     const accounts = client.getAllAccounts();
     account = accounts[0] || null;
@@ -39,11 +126,26 @@ async function getAccessToken() {
   return token.accessToken;
 }
 
+// Initiate login. The page will navigate away to Microsoft login and return.
+// Call initOneDrive() on every page load to pick up the redirect response.
 export async function connectOneDrive() {
-  const client = ensureMsal();
-  const response = await client.loginPopup({ scopes: oneDriveConfig.scopes, prompt: "select_account" });
-  account = response.account;
-  return account;
+  const client = await ensureMsalReady();
+  // loginRedirect navigates the page — this promise resolves just before navigation.
+  await client.loginRedirect({
+    scopes: oneDriveConfig.scopes,
+    prompt: "select_account",
+    redirectUri: oneDriveConfig.redirectUri
+  });
+}
+
+// Call this on every page load so redirect responses are processed automatically.
+export async function initOneDrive() {
+  try {
+    await ensureMsalReady();
+  } catch {
+    // Non-fatal — app still works without OneDrive.
+  }
+  return isConnected();
 }
 
 export function isConnected() {

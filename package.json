@@ -1,0 +1,26 @@
+{
+  "name": "energy-journal",
+  "version": "1.0.0",
+  "description": "A simple, beautiful static site to track daily energy/fatigue data, surface local fatigue insights, and sync to OneDrive.",
+  "main": "index.js",
+  "scripts": {
+    "vendor:msal": "node scripts/vendor-msal.mjs",
+    "postinstall": "npm run vendor:msal",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seabox/energy-journal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/seabox/energy-journal/issues"
+  },
+  "homepage": "https://github.com/seabox/energy-journal#readme",
+  "dependencies": {
+    "@azure/msal-browser": "^5.9.0"
+  }
+}
