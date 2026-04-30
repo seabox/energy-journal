@@ -6,6 +6,7 @@ export const CSV_HEADERS = [
   "Fatigue",
   "Exercise mins",
   "Exercise type",
+  "Steps",
   "Day nap",
   "Mood Awareness",
   "Mood",
@@ -15,6 +16,7 @@ export const CSV_HEADERS = [
   "Physical",
   "Reflect",
   "Down",
+  "Nutrition",
   "Notes"
 ];
 
@@ -24,6 +26,7 @@ export const FIELD_MAP = {
   fatigue: "Fatigue",
   exerciseMins: "Exercise mins",
   exerciseType: "Exercise type",
+  steps: "Steps",
   dayNap: "Day nap",
   moodAwareness: "Mood Awareness",
   mood: "Mood",
@@ -33,6 +36,7 @@ export const FIELD_MAP = {
   physical: "Physical",
   reflect: "Reflect",
   down: "Down",
+  nutrition: "Nutrition",
   notes: "Notes"
 };
 

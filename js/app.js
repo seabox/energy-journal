@@ -30,7 +30,8 @@ const sliderDefaults = {
   connecting: "1",
   physical: "1",
   reflect: "1",
-  down: "1"
+  down: "1",
+  nutrition: "7"
 };
 
 let entries = loadEntries();
@@ -87,8 +88,7 @@ initOneDrive().then(async (connected) => {
       }
       const sorted = sortEntriesByDateDesc(entries);
       await syncToOneDrive({
-        json: { updatedAt: new Date().toISOString(), entries: sorted },
-        csv: entriesToCsv(sorted)
+        json: { updatedAt: new Date().toISOString(), entries: sorted }
       });
       setStatus("OneDrive synced.");
     } catch (error) {
@@ -129,8 +129,7 @@ form.addEventListener("submit", async (event) => {
       formStatusEl.style.color = "var(--ink-soft)";
       const sorted = sortEntriesByDateDesc(entries);
       await syncToOneDrive({
-        json: { updatedAt: new Date().toISOString(), entries: sorted },
-        csv: entriesToCsv(sorted)
+        json: { updatedAt: new Date().toISOString(), entries: sorted }
       });
       formStatusEl.textContent = "Saved & synced \u2713";
       formStatusEl.style.color = "var(--ok)";
@@ -301,7 +300,7 @@ function renderEntries(sorted) {
   for (const entry of sorted.slice(0, 60)) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${entry.date || ""}</td>
+      <td>${entry.date ? new Date(entry.date + "T00:00:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" }) : ""}</td>
       <td>${safe(entry.fatigue)}</td>
       <td>${safe(entry.sleepQuality)}</td>
       <td>${safe(entry.exerciseMins)} ${safe(entry.exerciseType)}</td>
@@ -377,6 +376,7 @@ function readForm() {
     fatigue: toNumberOrNull(data.get("fatigue")),
     exerciseMins: toNumberOrNull(data.get("exerciseMins")),
     exerciseType: String(data.get("exerciseType") || "").trim(),
+    steps: toNumberOrNull(data.get("steps")),
     dayNap: normalizeYN(data.get("dayNap")),
     moodAwareness: toNumberOrNull(data.get("moodAwareness")),
     mood: String(data.get("mood") || "").trim(),
@@ -386,6 +386,7 @@ function readForm() {
     physical: toNumberOrNull(data.get("physical")),
     reflect: toNumberOrNull(data.get("reflect")),
     down: toNumberOrNull(data.get("down")),
+    nutrition: toNumberOrNull(data.get("nutrition")),
     notes: String(data.get("notes") || "").trim()
   };
 }

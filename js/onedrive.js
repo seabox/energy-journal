@@ -159,7 +159,6 @@ export function getAccountName() {
 export async function syncToOneDrive(payload) {
   const token = await getAccessToken();
   await uploadFile(ONEDRIVE_FILES.json, JSON.stringify(payload.json, null, 2), "application/json", token);
-  await uploadFile(ONEDRIVE_FILES.csv, payload.csv, "text/csv", token);
 }
 
 export async function pullFromOneDrive() {

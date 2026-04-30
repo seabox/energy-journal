@@ -18,7 +18,8 @@ export function buildInsights(entries) {
     { key: "connecting", label: "Connecting" },
     { key: "physical", label: "Physical (Exercise)" },
     { key: "reflect", label: "Reflection" },
-    { key: "down", label: "Downtime" }
+    { key: "down", label: "Downtime" },
+    { key: "nutrition", label: "Nutrition" }
   ];
   const platterAverages = platterFields
     .map(({ key, label }) => {

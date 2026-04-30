@@ -45,14 +45,14 @@
             <span class="slider-value">1</span>
           </div>
         </label>
-        <label>Minutes Exercised<input type="number" name="exerciseMins" min="0"></label>
+        <label title="World Health Organisation recommends 150 minutes of moderate-intensity physical activity throughout the week">Minutes Exercised<input type="number" name="exerciseMins" min="0"></label>
         <label>Exercise Type<input type="text" name="exerciseType" placeholder="Walk, Mowing..."></label>
+        <label title="NIH study shows adults who take 8,000 or more steps a day have a reduced risk of death.">Steps<input type="number" name="steps" min="0" placeholder="e.g. 8000"></label>
         <div class="field-group">
           <span class="field-group-label">Day Nap</span>
           <div class="yn-toggle" role="group" aria-label="Day Nap">
-            <label class="yn-opt"><input type="radio" name="dayNap" value="" checked><span>–</span></label>
             <label class="yn-opt"><input type="radio" name="dayNap" value="Y"><span>Y</span></label>
-            <label class="yn-opt"><input type="radio" name="dayNap" value="N"><span>N</span></label>
+            <label class="yn-opt"><input type="radio" name="dayNap" value="N" checked><span>N</span></label>
           </div>
         </div>
         <label title="0 = not self aware at all, 10 = fully in the moment and aware of emotions and mood">Mood Awareness
@@ -105,6 +105,12 @@
               <div class="slider-row">
                 <input type="range" name="down" min="0" max="10" step="1" value="1" data-slider>
                 <span class="slider-value">1</span>
+              </div>
+            </label>
+            <label title="Good balanced nutrition nourishes the brain&#39;s systems, supporting stable energy, clear thinking, and emotional balance.">Nutrition
+              <div class="slider-row">
+                <input type="range" name="nutrition" min="0" max="10" step="1" value="7" data-slider>
+                <span class="slider-value">7</span>
               </div>
             </label>
           </div>
