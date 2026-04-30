@@ -152,6 +152,10 @@ export function isConnected() {
   return Boolean(account);
 }
 
+export function getAccountName() {
+  return account ? (account.username || account.name || null) : null;
+}
+
 export async function syncToOneDrive(payload) {
   const token = await getAccessToken();
   await uploadFile(ONEDRIVE_FILES.json, JSON.stringify(payload.json, null, 2), "application/json", token);

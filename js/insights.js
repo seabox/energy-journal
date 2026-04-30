@@ -7,12 +7,28 @@ export function buildInsights(entries) {
 
   const fatigue7 = latest7.map((e) => e.fatigue).filter((v) => Number.isFinite(v));
   const sleep7 = latest7.map((e) => e.sleepQuality).filter((v) => Number.isFinite(v));
-  const focus7 = latest7.map((e) => e.focus).filter((v) => Number.isFinite(v));
 
   const fatigueAvg = average(fatigue7);
   const sleepAvg = average(sleep7);
-  const focusAvg = average(focus7);
   const previousFatigue = average(previous7.map((e) => e.fatigue).filter((v) => Number.isFinite(v)));
+
+  const platterFields = [
+    { key: "focus", label: "Focus time" },
+    { key: "play", label: "Playtime" },
+    { key: "connecting", label: "Connecting" },
+    { key: "physical", label: "Physical (Exercise)" },
+    { key: "reflect", label: "Reflection" },
+    { key: "down", label: "Downtime" }
+  ];
+  const platterAverages = platterFields
+    .map(({ key, label }) => {
+      const vals = latest7.map((e) => e[key]).filter((v) => Number.isFinite(v));
+      const avg = average(vals);
+      return avg !== null ? { label, avg } : null;
+    })
+    .filter(Boolean);
+  platterAverages.sort((a, b) => a.avg - b.avg);
+  const lowestPlatter = platterAverages.length ? platterAverages[0] : null;
 
   const withExercise = latest7.filter((e) => Number.isFinite(e.exerciseMins) && e.exerciseMins > 0 && Number.isFinite(e.fatigue));
   const noExercise = latest7.filter((e) => (!Number.isFinite(e.exerciseMins) || e.exerciseMins === 0) && Number.isFinite(e.fatigue));
@@ -30,7 +46,7 @@ export function buildInsights(entries) {
     cards: [
       { label: "7-Day Fatigue Avg", value: formatScore(fatigueAvg) },
       { label: "7-Day Sleep Avg", value: formatScore(sleepAvg) },
-      { label: "7-Day Focus Avg", value: formatScore(focusAvg) },
+      { label: "Lowest Platter", value: lowestPlatter ? `${lowestPlatter.label} (${lowestPlatter.avg.toFixed(1)})` : "-" },
       { label: "Fatigue vs Prior Week", value: deltaText(fatigueAvg, previousFatigue) }
     ],
     narrative: createNarrative({

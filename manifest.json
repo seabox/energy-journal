@@ -1,0 +1,25 @@
+{
+  "name": "Energy Journal",
+  "short_name": "Energy Journal",
+  "description": "Track energy and fatigue, sync to OneDrive, and get practical insights.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e1525",
+  "theme_color": "#1db99a",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

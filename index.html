@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,19 +9,24 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Serif:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/styles.css">
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/icon.svg">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#1db99a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Energy Journal">
 </head>
 <body>
   <div class="bg-shape bg-shape-a" aria-hidden="true"></div>
   <div class="bg-shape bg-shape-b" aria-hidden="true"></div>
 
   <header class="hero panel reveal">
+    <button id="theme-toggle" class="theme-toggle" aria-label="Switch to light mode" title="Switch to light mode">☀️</button>
     <p class="eyebrow">Energy Journal</p>
     <h1>Capture Your Day. Understand Your Fatigue.</h1>
-    <p class="sub">Simple daily tracking with practical insight cards and OneDrive sync.</p>
     <div class="hero-actions">
       <button id="connect-onedrive" class="btn btn-primary">Connect OneDrive</button>
-      <button id="sync-now" class="btn btn-ghost" disabled>Sync Now</button>
-      <button id="export-csv" class="btn btn-ghost">Export CSV</button>
     </div>
     <p id="sync-status" class="status">Not connected.</p>
   </header>
@@ -30,64 +35,73 @@
     <section class="panel reveal" aria-labelledby="entry-title">
       <h2 id="entry-title">Daily Entry</h2>
       <form id="entry-form" class="form-grid">
-        <label>Date<input type="date" name="date" required></label>
+        <label>Date
+          <input type="date" name="date" required>
+          <span id="date-warning" class="date-warning">Entry exists for this date — loading it for editing.</span>
+        </label>
         <label>Fatigue (0-10)
           <div class="slider-row">
             <input type="range" name="fatigue" min="0" max="10" step="1" value="1" data-slider required>
             <span class="slider-value">1</span>
           </div>
         </label>
-        <label>Exercise Mins<input type="number" name="exerciseMins" min="0"></label>
+        <label>Minutes Exercised<input type="number" name="exerciseMins" min="0"></label>
         <label>Exercise Type<input type="text" name="exerciseType" placeholder="Walk, Mowing..."></label>
-        <label>Day Nap
-          <select name="dayNap">
-            <option value="">-</option>
-            <option value="Y">Yes</option>
-            <option value="N">No</option>
-          </select>
+        <div class="field-group">
+          <span class="field-group-label">Day Nap</span>
+          <div class="yn-toggle" role="group" aria-label="Day Nap">
+            <label class="yn-opt"><input type="radio" name="dayNap" value="" checked><span>–</span></label>
+            <label class="yn-opt"><input type="radio" name="dayNap" value="Y"><span>Y</span></label>
+            <label class="yn-opt"><input type="radio" name="dayNap" value="N"><span>N</span></label>
+          </div>
+        </div>
+        <label title="0 = not self aware at all, 10 = fully in the moment and aware of emotions and mood">Mood Awareness
+          <div class="slider-row">
+            <input type="range" name="moodAwareness" min="0" max="10" step="1" value="0" data-slider>
+            <span class="slider-value">0</span>
+          </div>
         </label>
-        <label>Mood Awareness<input type="text" name="moodAwareness"></label>
         <label>Mood<input type="text" name="mood"></label>
         <fieldset class="full platter-group">
-          <legend>Healthy Mind Platter</legend>
+          <legend>Healthy Mind Platter <span class="platter-info" title="Adapted from The Healthy Mind Platter by Dr. Dan Siegel and David Rock, 2012">ⓘ</span></legend>
           <div class="platter-grid">
-            <label>Sleep Quality (0-10)
+            <label title="Sleep refreshes the brain&#39;s systems, supporting clearer thinking, better mood, and healthier cognition.">Sleep Quality
               <div class="slider-row">
                 <input type="range" name="sleepQuality" min="0" max="10" step="1" value="9" data-slider>
                 <span class="slider-value">9</span>
               </div>
             </label>
-            <label>Focus (0-10)
+            <label title="When we closely focus on tasks in a goal-oriented way, taking on challenges that make deep connections in the brain">Focus time
               <div class="slider-row">
                 <input type="range" name="focus" min="0" max="10" step="1" value="1" data-slider>
                 <span class="slider-value">1</span>
               </div>
             </label>
-            <label>Play (0-10)
+            <label title="When we allow ourselves to be spontaneous or creative, playfully enjoying novel experiences it helps make new connections in the brain and enhance the capacity to innovate, adapt, and master changing circumstances.">Playtime
               <div class="slider-row">
                 <input type="range" name="play" min="0" max="10" step="1" value="1" data-slider>
                 <span class="slider-value">1</span>
               </div>
             </label>
-            <label>Connecting (0-10)
+            <label title="When we connect with other people, ideally in person, or take time to appreciate our connection to the natural world around us it helps the brain feel safe, supported, and regulated.">Connecting
               <div class="slider-row">
                 <input type="range" name="connecting" min="0" max="10" step="1" value="1" data-slider>
                 <span class="slider-value">1</span>
               </div>
             </label>
-            <label>Physical (0-10)
+            <label title="When we move our bodies aerobically it energises the brain, improving mood, focus, and long-term cognitive health">Physical (Exercise)
               <div class="slider-row">
                 <input type="range" name="physical" min="0" max="10" step="1" value="1" data-slider>
                 <span class="slider-value">1</span>
               </div>
             </label>
-            <label>Reflect (0-10)
+            <label title="When we quietly reflect internally, focusing on sensations, images, feelings and thoughts in the moment, it helps build the brain&#39;s capacity for focus, emotional balance, and self-awareness">Reflection (time in)
               <div class="slider-row">
                 <input type="range" name="reflect" min="0" max="10" step="1" value="1" data-slider>
                 <span class="slider-value">1</span>
               </div>
             </label>
-            <label>Down (0-10)
+            <label title="When we are non-focused, without any specific goal, and let our mind wander or simply relax it helps the brain recharge and restore mental clarity">Downtime
               <div class="slider-row">
                 <input type="range" name="down" min="0" max="10" step="1" value="1" data-slider>
                 <span class="slider-value">1</span>
@@ -96,9 +110,12 @@
           </div>
         </fieldset>
         <label class="full">Notes<textarea name="notes" rows="3"></textarea></label>
-        <div class="form-actions full">
-          <button type="submit" class="btn btn-primary">Save Entry</button>
-          <button id="clear-form" type="button" class="btn btn-ghost">Clear</button>
+        <div class="full">
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Entry</button>
+            <button id="clear-form" type="button" class="btn btn-ghost">Clear</button>
+          </div>
+          <p id="form-status" class="form-status"></p>
         </div>
       </form>
     </section>
@@ -107,12 +124,20 @@
       <h2 id="insights-title">Fatigue Insights</h2>
       <div id="insights-cards" class="insights"></div>
       <p id="insights-narrative" class="narrative"></p>
+      <button id="deep-insights" class="btn btn-ghost btn-sm deep-insights-btn" title="Your last 3 weeks of entries will be summarised into a prompt and copied to your clipboard. You will then be redirected to Claude AI where you can paste it for a detailed analysis. No data is sent automatically — you control what you share.">&#129504; Deeper insights via AI</button>
     </section>
 
     <section class="panel panel-wide reveal" aria-labelledby="history-title">
       <div class="section-head">
         <h2 id="history-title">Recent Entries</h2>
-        <label class="import-wrap">Import CSV<input id="import-csv" type="file" accept=".csv"></label>
+        <div class="section-actions">
+          <label class="import-wrap">Import CSV<input id="import-csv" type="file" accept=".csv"></label>
+          <button id="export-csv" class="btn btn-ghost btn-sm">Export CSV</button>
+        </div>
+      </div>
+      <div id="missing-days-wrap" hidden>
+        <p class="missing-label">Missing entries (last 7 days):</p>
+        <div id="missing-days" class="missing-days"></div>
       </div>
       <div class="table-wrap">
         <table>
