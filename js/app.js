@@ -2,7 +2,9 @@ import { loadEntries, saveEntries } from "./storage-local.js";
 import { entriesToCsv, parseCsv } from "./csv.js";
 import { buildInsights } from "./insights.js";
 import { connectOneDrive, getAccountName, initOneDrive, isConnected, pullFromOneDrive, syncToOneDrive } from "./onedrive.js";
+import { connectGoogleDrive, getGDDisplayName, isGDConnected, pullFromGoogleDrive, reconnectGoogleDrive, syncToGoogleDrive } from "./storage-googledrive.js";
 import { isoDate, normalizeYN, sortEntriesByDateDesc, toNumberOrNull, uid } from "./utils.js";
+import { STORAGE_PREF_KEY } from "./constants.js";
 
 const form = document.querySelector("#entry-form");
 const clearButton = document.querySelector("#clear-form");
@@ -13,6 +15,9 @@ const importInput = document.querySelector("#import-csv");
 const statusEl = document.querySelector("#sync-status");
 const formStatusEl = document.querySelector("#form-status");
 const connectBtn = document.querySelector("#connect-onedrive");
+const connectGDBtn = document.querySelector("#connect-googledrive");
+const useLocalBtn = document.querySelector("#use-local");
+const changeStorageBtn = document.querySelector("#change-storage");
 const exportCsvBtn = document.querySelector("#export-csv");
 const themeToggleBtn = document.querySelector("#theme-toggle");
 const dateInput = form.elements.namedItem("date");
@@ -72,29 +77,93 @@ refreshSliderDisplays();
 bindDateDuplicateCheck();
 renderAll();
 
-// Process any pending redirect login response on every page load.
-initOneDrive().then(async (connected) => {
-  if (connected) {
-    const name = getAccountName();
-    connectBtn.textContent = name ? `${name} — OneDrive connected` : "OneDrive connected";
-    connectBtn.disabled = true;
-    try {
-      setStatus("Syncing with OneDrive…");
-      const remote = await pullFromOneDrive();
-      if (remote?.entries) {
-        entries = mergeEntries(entries, remote.entries);
-        saveEntries(entries);
-        renderAll();
-      }
-      const sorted = sortEntriesByDateDesc(entries);
-      await syncToOneDrive({
-        json: { updatedAt: new Date().toISOString(), entries: sorted }
-      });
-      setStatus("OneDrive synced.");
-    } catch (error) {
-      setStatus("Connected but sync failed: " + (error.message || "unknown error"), true);
+// ── Storage management ────────────────────────────────────────────────────
+
+function setStoragePref(pref) {
+  localStorage.setItem(STORAGE_PREF_KEY, pref);
+  document.documentElement.setAttribute("data-storage-pref", pref);
+  document.documentElement.removeAttribute("data-storage-pending");
+}
+
+function setOneDriveConnectedUI() {
+  const name = getAccountName();
+  connectBtn.textContent = name ? `${name} — OneDrive` : "OneDrive connected";
+  connectBtn.disabled = true;
+}
+
+function setGDConnectedUI() {
+  const name = getGDDisplayName();
+  connectGDBtn.textContent = name ? `${name} — Google Drive` : "Google Drive connected";
+  connectGDBtn.disabled = true;
+}
+
+async function doOneDriveSync() {
+  try {
+    setStatus("Syncing with OneDrive…");
+    const remote = await pullFromOneDrive();
+    if (remote?.entries) {
+      entries = mergeEntries(entries, remote.entries);
+      saveEntries(entries);
+      renderAll();
     }
+    await syncToOneDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
+    setStatus("OneDrive synced.");
+  } catch (err) {
+    setStatus("Connected but sync failed: " + (err.message || "unknown error"), true);
   }
+}
+
+async function doGoogleDriveSync() {
+  try {
+    setStatus("Syncing with Google Drive…");
+    const remote = await pullFromGoogleDrive();
+    if (remote?.entries) {
+      entries = mergeEntries(entries, remote.entries);
+      saveEntries(entries);
+      renderAll();
+    }
+    await syncToGoogleDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
+    setStatus("Google Drive synced.");
+  } catch (err) {
+    setStatus("Connected but sync failed: " + (err.message || "unknown error"), true);
+  }
+}
+
+// Always run initOneDrive to process any MSAL redirect response.
+initOneDrive().then(async (connected) => {
+  const currentPref = localStorage.getItem(STORAGE_PREF_KEY);
+
+  if (connected && !currentPref) {
+    // Returning from first-time OneDrive login redirect.
+    setStoragePref("onedrive");
+    setOneDriveConnectedUI();
+    await doOneDriveSync();
+    return;
+  }
+
+  if (currentPref === "onedrive") {
+    if (connected) {
+      setOneDriveConnectedUI();
+      await doOneDriveSync();
+    } else {
+      setStatus("OneDrive not connected — entries are saved locally.");
+    }
+    return;
+  }
+
+  if (currentPref === "googledrive") {
+    const gdName = getGDDisplayName();
+    connectGDBtn.textContent = gdName ? `Reconnect ${gdName}` : "Reconnect Google Drive";
+    setStatus("Click ‘Reconnect Google Drive’ to sync your entries.");
+    return;
+  }
+
+  if (currentPref === "local") {
+    setStatus("Saving locally on this device.");
+    return;
+  }
+
+  // No preference set — data-storage-pending keeps main hidden; all options visible.
 });
 
 form.addEventListener("submit", async (event) => {
@@ -111,26 +180,22 @@ form.addEventListener("submit", async (event) => {
 
   if (editId) {
     entries = entries.map((entry) => (entry.id === editId ? { ...entry, ...record, id: editId, updatedAt: new Date().toISOString() } : entry));
-    editId = null;
+    // keep editId so further saves update the same entry
   } else {
-    entries.push({ ...record, id: uid(), updatedAt: new Date().toISOString() });
+    const newId = uid();
+    entries.push({ ...record, id: newId, updatedAt: new Date().toISOString() });
+    editId = newId; // lock subsequent saves to this entry
   }
 
   saveEntries(entries);
-  form.reset();
-  hydrateDateDefault();
-  hydrateSliderDefaults();
-  refreshSliderDisplays();
   renderAll();
 
-  if (isConnected()) {
+  const activePref = localStorage.getItem(STORAGE_PREF_KEY);
+  if (activePref === "onedrive" && isConnected()) {
     try {
       formStatusEl.textContent = "Syncing…";
       formStatusEl.style.color = "var(--ink-soft)";
-      const sorted = sortEntriesByDateDesc(entries);
-      await syncToOneDrive({
-        json: { updatedAt: new Date().toISOString(), entries: sorted }
-      });
+      await syncToOneDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
       formStatusEl.textContent = "Saved & synced \u2713";
       formStatusEl.style.color = "var(--ok)";
       setStatus("Synced to OneDrive.");
@@ -138,6 +203,19 @@ form.addEventListener("submit", async (event) => {
       formStatusEl.textContent = "Saved locally (sync failed)";
       formStatusEl.style.color = "var(--warn)";
       setStatus("OneDrive sync failed: " + (error.message || "unknown error"), true);
+    }
+  } else if (activePref === "googledrive" && isGDConnected()) {
+    try {
+      formStatusEl.textContent = "Syncing…";
+      formStatusEl.style.color = "var(--ink-soft)";
+      await syncToGoogleDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
+      formStatusEl.textContent = "Saved & synced \u2713";
+      formStatusEl.style.color = "var(--ok)";
+      setStatus("Synced to Google Drive.");
+    } catch (error) {
+      formStatusEl.textContent = "Saved locally (sync failed)";
+      formStatusEl.style.color = "var(--warn)";
+      setStatus("Google Drive sync failed: " + (error.message || "unknown error"), true);
     }
   } else {
     formStatusEl.textContent = "Saved locally \u2713";
@@ -182,6 +260,43 @@ connectBtn.addEventListener("click", async () => {
     // Page will navigate away — code below only runs if navigation is blocked.
   } catch (error) {
     setStatus(error.message || "OneDrive connection failed.", true);
+  }
+});
+
+connectGDBtn.addEventListener("click", async () => {
+  const currentPref = localStorage.getItem(STORAGE_PREF_KEY);
+  const isReconnect = currentPref === "googledrive";
+  connectGDBtn.disabled = true;
+  connectGDBtn.textContent = "Connecting…";
+  try {
+    if (isReconnect) {
+      await reconnectGoogleDrive();
+    } else {
+      await connectGoogleDrive();
+      setStoragePref("googledrive");
+    }
+    setGDConnectedUI();
+    await doGoogleDriveSync();
+  } catch (err) {
+    connectGDBtn.disabled = false;
+    const gdName = getGDDisplayName();
+    connectGDBtn.textContent = isReconnect
+      ? (gdName ? `Reconnect ${gdName}` : "Reconnect Google Drive")
+      : "Connect Google Drive";
+    setStatus(err.message || "Google Drive connection failed.", true);
+  }
+});
+
+useLocalBtn.addEventListener("click", () => {
+  setStoragePref("local");
+  setStatus("Saving locally on this device.");
+});
+
+changeStorageBtn.addEventListener("click", () => {
+  if (confirm("Reset your storage choice? Your entries will remain on this device.")) {
+    localStorage.removeItem(STORAGE_PREF_KEY);
+    localStorage.removeItem("ej-gd-display");
+    location.reload();
   }
 });
 
@@ -359,7 +474,7 @@ function renderInsights(sorted) {
     div.innerHTML = `<h3>${card.label}</h3><p>${card.value}</p>`;
     cardsEl.appendChild(div);
   }
-  narrativeEl.textContent = insights.narrative;
+  narrativeEl.innerHTML = insights.narrative;
 }
 
 /**

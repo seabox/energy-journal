@@ -16,18 +16,34 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Energy Journal">
+  <!-- Synchronously gate the main content until a storage option is chosen -->
+  <script>(function(){var p=localStorage.getItem('ej-storage');if(!p)document.documentElement.setAttribute('data-storage-pending','');else document.documentElement.setAttribute('data-storage-pref',p);})();</script>
 </head>
 <body>
   <div class="bg-shape bg-shape-a" aria-hidden="true"></div>
   <div class="bg-shape bg-shape-b" aria-hidden="true"></div>
 
   <header class="hero panel reveal">
+    <a href="./about.html" class="about-link" aria-label="About this app" title="About this app">ⓘ</a>
     <button id="theme-toggle" class="theme-toggle" aria-label="Switch to light mode" title="Switch to light mode">☀️</button>
-    <p class="eyebrow">Energy Journal</p>
-    <h1>Capture Your Day. Understand Your Fatigue.</h1>
+    <p class="eyebrow">Energy & Mind Journal</p>
+    <h1>Capture your day. Understand your mind.</h1>
+    <p id="storage-prompt-label" class="storage-prompt-label">Choose where to save your entries:</p>
     <div class="hero-actions">
-      <button id="connect-onedrive" class="btn btn-primary">Connect OneDrive</button>
+      <div id="storage-opt-onedrive" class="storage-opt">
+        <button id="connect-onedrive" class="btn btn-primary">Connect OneDrive</button>
+        <p class="storage-opt-desc">Sync via Microsoft OneDrive</p>
+      </div>
+      <div id="storage-opt-googledrive" class="storage-opt">
+        <button id="connect-googledrive" class="btn btn-primary">Connect Google Drive</button>
+        <p class="storage-opt-desc">Sync via Google Drive</p>
+      </div>
+      <div id="storage-opt-local" class="storage-opt">
+        <button id="use-local" class="btn btn-ghost">Save on this device</button>
+        <p class="storage-opt-desc">Browser only — no cloud backup</p>
+      </div>
     </div>
+    <button id="change-storage" class="change-storage-btn">Change storage</button>
     <p id="sync-status" class="status">Not connected.</p>
   </header>
 
@@ -46,7 +62,7 @@
           </div>
         </label>
         <label title="World Health Organisation recommends 150 minutes of moderate-intensity physical activity throughout the week">Minutes Exercised<input type="number" name="exerciseMins" min="0"></label>
-        <label>Exercise Type<input type="text" name="exerciseType" placeholder="Walk, Mowing..."></label>
+        <label>Exercise Type<input type="text" name="exerciseType" placeholder="Walk, Run, Swim..."></label>
         <label title="NIH study shows adults who take 8,000 or more steps a day have a reduced risk of death.">Steps<input type="number" name="steps" min="0" placeholder="e.g. 8000"></label>
         <div class="field-group">
           <span class="field-group-label">Day Nap</span>
@@ -95,7 +111,7 @@
                 <span class="slider-value">1</span>
               </div>
             </label>
-            <label title="When we quietly reflect internally, focusing on sensations, images, feelings and thoughts in the moment, it helps build the brain&#39;s capacity for focus, emotional balance, and self-awareness">Reflection (time in)
+            <label title="When we reflect internally, focusing on sensations, feelings and thoughts or pause for prayer or inner spiritual reflection, it helps build the brain&#39;s capacity for focus, emotional balance, and self-awareness">Reflection (time in/prayer)
               <div class="slider-row">
                 <input type="range" name="reflect" min="0" max="10" step="1" value="1" data-slider>
                 <span class="slider-value">1</span>
@@ -129,7 +145,7 @@
     <section class="panel reveal" aria-labelledby="insights-title">
       <h2 id="insights-title">Fatigue Insights</h2>
       <div id="insights-cards" class="insights"></div>
-      <p id="insights-narrative" class="narrative"></p>
+      <div id="insights-narrative" class="narrative"></div>
       <button id="deep-insights" class="btn btn-ghost btn-sm deep-insights-btn" title="Your last 3 weeks of entries will be summarised into a prompt and copied to your clipboard. You will then be redirected to Claude AI where you can paste it for a detailed analysis. No data is sent automatically — you control what you share.">&#129504; Deeper insights via AI</button>
     </section>
 

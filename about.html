@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About &mdash; Energy Journal</title>
+  <meta name="description" content="About the Energy and Mind Journal &mdash; field descriptions, research references, and technical requirements.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Serif:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css">
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/icon.svg">
+  <script>(function(){var t=localStorage.getItem('ej-theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
+</head>
+<body>
+  <div class="bg-shape bg-shape-a" aria-hidden="true"></div>
+  <div class="bg-shape bg-shape-b" aria-hidden="true"></div>
+
+  <div class="about-wrap">
+
+    <div class="about-nav">
+      <a href="./index.html" class="back-link">&#8592; Back to Journal</a>
+    </div>
+
+    <header class="hero panel reveal about-hero">
+      <button id="theme-toggle" class="theme-toggle" aria-label="Switch to light mode" title="Switch to light mode">&#9728;&#65039;</button>
+      <p class="eyebrow">Energy &amp; Mind Journal</p>
+      <h1>About this app</h1>
+      <p class="sub">A personal daily journal for tracking energy, fatigue, and the habits that shape how your brain and body feel &mdash; grounded in established health frameworks.</p>
+    </header>
+
+    <section class="panel about-section reveal">
+      <h2>What is this?</h2>
+      <p>Energy Journal is a private, browser-based tool for logging how you feel each day and identifying patterns over time. It combines fatigue and sleep tracking with the <strong>Healthy Mind Platter</strong> framework to give you a holistic picture of your mental and physical wellbeing.</p>
+      <p>Your data stays with you &mdash; stored in your browser or optionally synced to your own cloud storage. Nothing is sent to any server run by this app.</p>
+    </section>
+
+    <section class="panel about-section reveal">
+      <h2>Field guide</h2>
+      <div class="field-table-wrap">
+      <table class="field-table">
+        <thead>
+          <tr><th>Field</th><th>What it means</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Date</td>
+            <td>The calendar date the entry is for. Only one entry per date is kept &mdash; saving on an existing date updates it.</td>
+          </tr>
+          <tr>
+            <td>Fatigue (0&ndash;10)</td>
+            <td>Your subjective fatigue level. 0&nbsp;= no fatigue at all; 10&nbsp;= extreme, debilitating exhaustion. This is the primary metric the Insights section analyses.</td>
+          </tr>
+          <tr>
+            <td>Minutes Exercised</td>
+            <td>Total minutes of physical activity. The <a href="https://www.who.int/news-room/fact-sheets/detail/physical-activity" target="_blank" rel="noopener">WHO recommends at least 150 minutes of moderate-intensity aerobic activity per week</a> for adults. Filling this in auto-sets the Physical platter slider.</td>
+          </tr>
+          <tr>
+            <td>Exercise Type</td>
+            <td>Free text &mdash; walk, run, swim, yoga, etc. Useful for spotting which activities correlate with better energy.</td>
+          </tr>
+          <tr>
+            <td>Steps</td>
+            <td>Daily step count. A <a href="https://www.nih.gov/news-events/nih-research-matters/number-steps-day-more-important-step-intensity" target="_blank" rel="noopener">NIH study</a> found adults taking 8,000 or more steps per day had significantly reduced all-cause mortality risk.</td>
+          </tr>
+          <tr>
+            <td>Day Nap</td>
+            <td>Whether you napped during the day. Useful context when sleep quality is low or fatigue is unusually high or low.</td>
+          </tr>
+          <tr>
+            <td>Mood Awareness (0&ndash;10)</td>
+            <td>How present and self-aware you felt. 0&nbsp;= no self-awareness; 10&nbsp;= fully in the moment, clearly aware of your emotions and internal state. Based on mindfulness concepts in <a href="https://drdansiegel.com/mindsight/" target="_blank" rel="noopener">Dr Dan Siegel&rsquo;s mindsight work</a>.</td>
+          </tr>
+          <tr>
+            <td>Mood</td>
+            <td>A free-text label for how you felt &mdash; e.g. &ldquo;anxious&rdquo;, &ldquo;calm&rdquo;, &ldquo;irritable&rdquo;. Shown in the history table for quick review.</td>
+          </tr>
+          <tr>
+            <td>Notes</td>
+            <td>Anything worth remembering about the day &mdash; stressors, illness, travel, significant events. The more specific, the more useful the AI deep-dive becomes.</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <section class="panel about-section reveal">
+      <h2>The Healthy Mind Platter</h2>
+      <p>Developed by <strong>Dr Dan Siegel</strong> (Clinical Professor of Psychiatry, UCLA) and <strong>David Rock</strong> (Director, NeuroLeadership Institute) in 2011. It describes seven daily mental activities that together promote integration and wellbeing in the brain &mdash; analogous to the way a balanced food plate covers nutritional needs.</p>
+      <p><a href="https://www.drdansiegel.com/healthy-mind-platter/" target="_blank" rel="noopener">Official Healthy Mind Platter resource &rarr;</a></p>
+      <div class="field-table-wrap">
+      <table class="field-table">
+        <thead>
+          <tr><th>Platter area</th><th>What it captures</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Sleep Quality</td>
+            <td>How refreshing your sleep was. Sleep is the brain&rsquo;s primary restoration mechanism &mdash; it clears metabolic waste, consolidates memory, and regulates mood. The <a href="https://www.sleepfoundation.org/how-sleep-works/stages-of-sleep" target="_blank" rel="noopener">Sleep Foundation</a> recommends 7&ndash;9 hours for most adults.</td>
+          </tr>
+          <tr>
+            <td>Focus time</td>
+            <td>Goal-oriented, deep concentration time. Closely focusing on challenging tasks forms strong neural connections that build cognitive capacity over time.</td>
+          </tr>
+          <tr>
+            <td>Playtime</td>
+            <td>Spontaneous, creative, or novel activity &mdash; anything playful and unstructured. Helps the brain form new connections and enhances the ability to innovate and adapt.</td>
+          </tr>
+          <tr>
+            <td>Connecting</td>
+            <td>Time with other people (ideally face-to-face) or appreciating your connection to the natural world. Social connection activates brain circuits that promote safety and emotional regulation.</td>
+          </tr>
+          <tr>
+            <td>Physical (Exercise)</td>
+            <td>Aerobic physical movement. Exercise releases BDNF (brain-derived neurotrophic factor), improving mood, focus, and long-term cognitive health. Auto-populated from Minutes Exercised.</td>
+          </tr>
+          <tr>
+            <td>Reflection</td>
+            <td>Internal reflection &mdash; journalling, meditation, prayer, or quiet contemplative time. Builds capacity for emotional balance and self-awareness by engaging the medial prefrontal cortex.</td>
+          </tr>
+          <tr>
+            <td>Downtime</td>
+            <td>Non-focused, unscheduled rest &mdash; mind-wandering, daydreaming, or simply relaxing without a goal. Allows the brain&rsquo;s default mode network to restore mental clarity and creativity.</td>
+          </tr>
+          <tr>
+            <td>Nutrition</td>
+            <td>Quality and consistency of eating. Good nutrition supports stable blood sugar, neurotransmitter production, and sustained energy. 0&nbsp;= very poor; 10&nbsp;= well-balanced and consistent.</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <section class="panel about-section reveal">
+      <h2>Insights &amp; AI deep-dive</h2>
+      <p>The <strong>Fatigue Insights</strong> panel analyses your last 7 days of entries to surface:</p>
+      <ul>
+        <li>Your average fatigue level and whether it is trending up or down vs the prior week</li>
+        <li>Your average sleep quality and how it relates to your fatigue levels</li>
+        <li>The Healthy Mind Platter areas you have invested in least over the last 3 days, with a practical suggestion for each</li>
+      </ul>
+      <p>The <strong>Deeper insights via AI</strong> button compiles your last 21 days into a structured prompt and copies it to your clipboard, then opens <a href="https://claude.ai" target="_blank" rel="noopener">Claude AI</a>. You paste the prompt yourself &mdash; no data is sent automatically.</p>
+    </section>
+
+    <section class="panel about-section reveal">
+      <h2>Technical requirements &amp; features</h2>
+      <ul>
+        <li><strong>Browser storage</strong> &mdash; entries are always saved to <code>localStorage</code> as a fallback, so the app works fully offline.</li>
+        <li><strong>Cloud sync &mdash; OneDrive</strong> &mdash; connect a personal Microsoft account. Requires an Azure app registration with the <code>Files.ReadWrite.AppFolder</code> permission. Data is stored in your own OneDrive app folder, invisible to other apps.</li>
+        <li><strong>Cloud sync &mdash; Google Drive</strong> &mdash; connect a Google account. Requires a Google Cloud project with the Drive API enabled and an OAuth2 client ID. Data is stored in your Drive&rsquo;s private app-data folder (not visible in the Drive UI).</li>
+        <li><strong>Change storage</strong> &mdash; the &ldquo;Change storage&rdquo; link beneath the header lets you switch providers at any time. Your local entries are preserved.</li>
+        <li><strong>Dark / light mode</strong> &mdash; toggle with the &#9728;&#65039;&nbsp;/&nbsp;&#127769; button in the header. Your preference is saved to <code>localStorage</code>.</li>
+        <li><strong>CSV export</strong> &mdash; download all entries as a spreadsheet-compatible CSV from the Recent Entries section.</li>
+        <li><strong>CSV import</strong> &mdash; import a previously exported CSV to restore or merge entries across devices.</li>
+        <li><strong>Missing days indicator</strong> &mdash; orange badges appear above the history table for any of the last 7 days with no entry. Tap one to pre-fill that date.</li>
+        <li><strong>Progressive Web App (PWA)</strong> &mdash; can be installed to your home screen on iOS/Android or as a desktop app via Chrome. Works offline once loaded.</li>
+        <li><strong>No account required</strong> &mdash; this app has no server, no login, and no analytics. Cloud sync is entirely optional and uses only your own accounts.</li>
+      </ul>
+    </section>
+
+    <section class="panel about-section reveal">
+      <h2>Sources &amp; further reading</h2>
+      <ul>
+        <li><a href="https://www.drdansiegel.com/healthy-mind-platter/" target="_blank" rel="noopener">The Healthy Mind Platter &mdash; Dr Dan Siegel &amp; David Rock (2011)</a></li>
+        <li><a href="https://www.who.int/news-room/fact-sheets/detail/physical-activity" target="_blank" rel="noopener">WHO Physical Activity Guidelines</a></li>
+        <li><a href="https://www.nih.gov/news-events/nih-research-matters/number-steps-day-more-important-step-intensity" target="_blank" rel="noopener">NIH: Step count and mortality risk</a></li>
+        <li><a href="https://www.sleepfoundation.org/how-sleep-works/stages-of-sleep" target="_blank" rel="noopener">Sleep Foundation: How sleep works</a></li>
+        <li><a href="https://drdansiegel.com/mindsight/" target="_blank" rel="noopener">Dr Dan Siegel: Mindsight &amp; mood awareness</a></li>
+        <li><a href="https://neuroleadership.com" target="_blank" rel="noopener">NeuroLeadership Institute &mdash; David Rock</a></li>
+      </ul>
+    </section>
+
+    <footer class="about-footer">
+      Energy Journal &middot; <a href="./index.html">Back to Journal</a>
+    </footer>
+
+  </div>
+
+  <script type="module">
+    const btn = document.querySelector('#theme-toggle');
+    function applyTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      btn.textContent = t === 'dark' ? '\u2600\ufe0f' : '\uD83C\uDF19';
+      btn.setAttribute('aria-label', t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+      localStorage.setItem('ej-theme', t);
+    }
+    applyTheme(localStorage.getItem('ej-theme') || 'dark');
+    btn.addEventListener('click', () => {
+      applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    });
+  </script>
+</body>
+</html>

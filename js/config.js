@@ -5,3 +5,11 @@ export const oneDriveConfig = {
   redirectUri: window.location.origin + window.location.pathname,
   scopes: ["Files.ReadWrite.AppFolder", "offline_access", "openid", "profile"]
 };
+
+// Replace clientId with your Google Cloud OAuth2 client ID.
+// Create one at https://console.cloud.google.com/ → APIs & Services → Credentials.
+// Authorised JavaScript origin must include this app's origin.
+export const googleDriveConfig = {
+  clientId: "230155349007-vo3l03vuigfjlr8rnhnf7sj82i9jeq4q.apps.googleusercontent.com",
+  scopes: "https://www.googleapis.com/auth/drive.appdata"
+};

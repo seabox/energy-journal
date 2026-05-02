@@ -1,4 +1,5 @@
 export const STORAGE_KEY = "energy-journal-entries-v1";
+export const STORAGE_PREF_KEY = "ej-storage";
 
 export const CSV_HEADERS = [
   "Date",
