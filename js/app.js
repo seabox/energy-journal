@@ -1,7 +1,7 @@
 import { loadEntries, saveEntries } from "./storage-local.js";
 import { entriesToCsv, parseCsv } from "./csv.js";
 import { buildInsights } from "./insights.js";
-import { connectOneDrive, getODDisplayName, initOneDrive, isODConnected, pullFromOneDrive, syncToOneDrive } from "./storage-onedrive.js";
+import { connectOneDrive, getODDisplayName, initOneDrive, isODConnected, pullFromOneDrive, syncToOneDrive, wasODRedirectLogin } from "./storage-onedrive.js";
 import { connectGoogleDrive, getGDDisplayName, isGDConnected, pullFromGoogleDrive, reconnectGoogleDrive, syncToGoogleDrive } from "./storage-googledrive.js";
 import { isoDate, normalizeYN, sortEntriesByDateDesc, toNumberOrNull, uid } from "./utils.js";
 import { STORAGE_PREF_KEY } from "./constants.js";
@@ -133,7 +133,7 @@ async function doGoogleDriveSync() {
 initOneDrive().then(async (connected) => {
   const currentPref = localStorage.getItem(STORAGE_PREF_KEY);
 
-  if (connected && !currentPref) {
+  if (connected && !currentPref && wasODRedirectLogin()) {
     // Returning from first-time OneDrive login redirect.
     setStoragePref("onedrive");
     setOneDriveConnectedUI();

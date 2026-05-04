@@ -5,6 +5,7 @@ let msalClient;
 let account = null;
 let initPromise = null;
 let eventCallbackId = null;
+let redirectLogin = false; // true only when account came from a fresh loginRedirect response
 
 const msalDebug = {
   enabled: true,
@@ -99,6 +100,7 @@ async function ensureMsalReady() {
       const redirectResponse = await client.handleRedirectPromise();
       if (redirectResponse?.account) {
         account = redirectResponse.account;
+        redirectLogin = true;
       }
       // Restore previously signed-in account from cache.
       if (!account) {
@@ -150,6 +152,11 @@ export async function initOneDrive() {
 
 export function isODConnected() {
   return Boolean(account);
+}
+
+/** True only when the account was established from a fresh loginRedirect response this page load. */
+export function wasODRedirectLogin() {
+  return redirectLogin;
 }
 
 export function getODDisplayName() {
