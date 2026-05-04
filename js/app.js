@@ -434,7 +434,7 @@ function renderEntries(sorted) {
   body.appendChild(fragment);
 }
 
-body.addEventListener("click", (event) => {
+body.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");
   if (!button) {
     return;
