@@ -449,7 +449,27 @@ body.addEventListener("click", (event) => {
     entries = entries.filter((entry) => entry.id !== id);
     saveEntries(entries);
     renderAll();
-    setStatus("Entry deleted.");
+
+    const activePref = localStorage.getItem(STORAGE_PREF_KEY);
+    if (activePref === "onedrive" && isODConnected()) {
+      try {
+        setStatus("Syncing deletion to OneDrive…");
+        await syncToOneDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
+        setStatus("Entry deleted & synced to OneDrive.");
+      } catch (err) {
+        setStatus("Deleted locally (OneDrive sync failed): " + (err.message || "unknown error"), true);
+      }
+    } else if (activePref === "googledrive" && isGDConnected()) {
+      try {
+        setStatus("Syncing deletion to Google Drive…");
+        await syncToGoogleDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
+        setStatus("Entry deleted & synced to Google Drive.");
+      } catch (err) {
+        setStatus("Deleted locally (Google Drive sync failed): " + (err.message || "unknown error"), true);
+      }
+    } else {
+      setStatus("Entry deleted.");
+    }
     return;
   }
 
