@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Energy Journal</title>
-  <meta name="description" content="Track energy and fatigue, sync to OneDrive, and get practical insights.">
+  <meta name="description" content="Track daily energy, fatigue, sleep, and wellbeing. Sync to OneDrive, Google Drive, or save locally.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Serif:wght@500&display=swap" rel="stylesheet">
@@ -12,9 +12,8 @@
   <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#1db99a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1db99a" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#0f766e" media="(prefers-color-scheme: light)">
   <meta name="apple-mobile-web-app-title" content="Energy Journal">
   <!-- Synchronously gate the main content until a storage option is chosen -->
   <script>(function(){var p=localStorage.getItem('ej-storage');if(!p)document.documentElement.setAttribute('data-storage-pending','');else document.documentElement.setAttribute('data-storage-pref',p);})();</script>

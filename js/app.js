@@ -462,6 +462,8 @@ body.addEventListener("click", (event) => {
     writeForm(found);
     refreshSliderDisplays();
     setStatus("Editing entry. Save to update.");
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+    form.elements.namedItem("fatigue")?.focus();
   }
 });
 
@@ -663,6 +665,12 @@ function checkDateForExisting(chosenDate) {
     refreshSliderDisplays();
   } else {
     dateWarningEl.classList.remove("visible");
+    editId = null;
+    form.reset();
+    formStatusEl.textContent = "";
+    dateInput.value = chosenDate;
+    hydrateSliderDefaults();
+    refreshSliderDisplays();
   }
 }
 
@@ -718,12 +726,15 @@ function renderMissingDays(sorted) {
     badge.textContent = d.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
     badge.title = iso;
     badge.addEventListener("click", () => {
+      editId = null;
+      form.reset();
+      formStatusEl.textContent = "";
       dateInput.value = iso;
       dateWarningEl.classList.remove("visible");
-      editId = null;
       hydrateSliderDefaults();
       refreshSliderDisplays();
       form.scrollIntoView({ behavior: "smooth", block: "start" });
+      form.elements.namedItem("fatigue")?.focus();
     });
     missingDaysEl.appendChild(badge);
   }

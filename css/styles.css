@@ -231,7 +231,7 @@ textarea {
 
 .slider-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: 0.55rem;
 }
@@ -244,6 +244,7 @@ input[type="range"] {
 }
 
 .slider-value {
+  order: -1;
   min-width: 1.7rem;
   text-align: center;
   font-weight: 700;
@@ -620,6 +621,11 @@ th {
 
 .date-warning.visible {
   display: block;
+}
+
+/* Make the browser-native date picker icon light in dark mode */
+[data-theme="dark"] input[type="date"] {
+  color-scheme: dark;
 }
 
 /* ── Storage gate & selection ─────────────────────────────── */
