@@ -11,5 +11,5 @@ export const oneDriveConfig = {
 // Authorised JavaScript origin must include this app's origin.
 export const googleDriveConfig = {
   clientId: "230155349007-vo3l03vuigfjlr8rnhnf7sj82i9jeq4q.apps.googleusercontent.com",
-  scopes: "https://www.googleapis.com/auth/drive.appdata"
+  scopes: "https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.email"
 };

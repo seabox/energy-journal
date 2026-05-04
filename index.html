@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Serif:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/styles.css">
   <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="./icons/icon.svg">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#1db99a">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -145,7 +145,7 @@
     <section class="panel reveal" aria-labelledby="insights-title">
       <h2 id="insights-title">Fatigue Insights</h2>
       <div id="insights-cards" class="insights"></div>
-      <div id="insights-narrative" class="narrative"></div>
+      <div id="insights-narrative" class="narrative" aria-live="polite" aria-atomic="true"></div>
       <button id="deep-insights" class="btn btn-ghost btn-sm deep-insights-btn" title="Your last 3 weeks of entries will be summarised into a prompt and copied to your clipboard. You will then be redirected to Claude AI where you can paste it for a detailed analysis. No data is sent automatically — you control what you share.">&#129504; Deeper insights via AI</button>
     </section>
 

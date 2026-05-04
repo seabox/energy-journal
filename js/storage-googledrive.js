@@ -21,13 +21,15 @@ function loadGis() {
 }
 
 async function buildTokenClient() {
-  if (tokenClient) return tokenClient;
+  // Rebuild if scopes have changed since last build.
+  if (tokenClient && tokenClient.__scopes === googleDriveConfig.scopes) return tokenClient;
   await loadGis();
   tokenClient = window.google.accounts.oauth2.initTokenClient({
     client_id: googleDriveConfig.clientId,
     scope: googleDriveConfig.scopes,
     callback: () => {},
   });
+  tokenClient.__scopes = googleDriveConfig.scopes;
   return tokenClient;
 }
 
@@ -96,7 +98,12 @@ async function resolveFileId() {
   const res = await authedFetch(
     `${DRIVE_API}?spaces=appDataFolder&q=${q}&fields=files(id)&pageSize=1`
   );
-  if (!res.ok) throw new Error("Google Drive file search failed.");
+  if (res.status === 403) {
+    throw new Error(
+      "Google Drive returned 403 Forbidden. Make sure the Google Drive API is enabled in your Google Cloud project: console.cloud.google.com → APIs & Services → Enable APIs → search for 'Google Drive API'."
+    );
+  }
+  if (!res.ok) throw new Error(`Google Drive file search failed (HTTP ${res.status}).`);
   const { files } = await res.json();
   cachedFileId = files?.[0]?.id ?? null;
   return cachedFileId;

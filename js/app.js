@@ -1,7 +1,7 @@
 import { loadEntries, saveEntries } from "./storage-local.js";
 import { entriesToCsv, parseCsv } from "./csv.js";
 import { buildInsights } from "./insights.js";
-import { connectOneDrive, getAccountName, initOneDrive, isConnected, pullFromOneDrive, syncToOneDrive } from "./onedrive.js";
+import { connectOneDrive, getODDisplayName, initOneDrive, isODConnected, pullFromOneDrive, syncToOneDrive } from "./storage-onedrive.js";
 import { connectGoogleDrive, getGDDisplayName, isGDConnected, pullFromGoogleDrive, reconnectGoogleDrive, syncToGoogleDrive } from "./storage-googledrive.js";
 import { isoDate, normalizeYN, sortEntriesByDateDesc, toNumberOrNull, uid } from "./utils.js";
 import { STORAGE_PREF_KEY } from "./constants.js";
@@ -86,7 +86,7 @@ function setStoragePref(pref) {
 }
 
 function setOneDriveConnectedUI() {
-  const name = getAccountName();
+  const name = getODDisplayName();
   connectBtn.textContent = name ? `${name} — OneDrive` : "OneDrive connected";
   connectBtn.disabled = true;
 }
@@ -191,7 +191,7 @@ form.addEventListener("submit", async (event) => {
   renderAll();
 
   const activePref = localStorage.getItem(STORAGE_PREF_KEY);
-  if (activePref === "onedrive" && isConnected()) {
+  if (activePref === "onedrive" && isODConnected()) {
     try {
       formStatusEl.textContent = "Syncing…";
       formStatusEl.style.color = "var(--ink-soft)";
@@ -305,7 +305,9 @@ exportCsvBtn.addEventListener("click", () => {
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = `energy-journal-${new Date().toISOString().slice(0, 10)}.csv`;
+  const now = new Date();
+  const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  link.download = `energy-journal-${localDate}.csv`;
   link.click();
   URL.revokeObjectURL(link.href);
 });
@@ -423,8 +425,8 @@ function renderEntries(sorted) {
       <td>${safe(entry.focus)}</td>
       <td>${safe(entry.notes)}</td>
       <td>
-        <button class="small-btn" data-action="edit" data-id="${entry.id}">Edit</button>
-        <button class="small-btn" data-action="delete" data-id="${entry.id}">Delete</button>
+        <button class="btn-table" data-action="edit" data-id="${entry.id}" aria-label="Edit entry for ${safe(entry.date)}">Edit</button>
+        <button class="btn-table" data-action="delete" data-id="${entry.id}" aria-label="Delete entry for ${safe(entry.date)}">Delete</button>
       </td>
     `;
     fragment.appendChild(tr);
@@ -441,6 +443,9 @@ body.addEventListener("click", (event) => {
   const action = button.dataset.action;
 
   if (action === "delete") {
+    const target = entries.find((entry) => entry.id === id);
+    const label = target?.date ? new Date(target.date + "T00:00:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" }) : "this entry";
+    if (!confirm(`Delete the entry for ${label}? This cannot be undone.`)) return;
     entries = entries.filter((entry) => entry.id !== id);
     saveEntries(entries);
     renderAll();
@@ -589,6 +594,14 @@ function hydrateSliderDefaults() {
 function bindSliderUpdates() {
   for (const slider of sliderInputs) {
     slider.addEventListener("input", refreshSliderDisplayFor);
+    // On mobile, blur any focused text input when touching a slider so the
+    // browser doesn't scroll back to the text field mid-drag.
+    slider.addEventListener("touchstart", () => {
+      const active = document.activeElement;
+      if (active && active !== slider && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
+        active.blur();
+      }
+    }, { passive: true });
   }
 }
 
@@ -622,7 +635,12 @@ function refreshSliderDisplayFor(event) {
  * @returns {string} The string representation, or '' for null/undefined.
  */
 function safe(value) {
-  return value === null || value === undefined ? "" : String(value);
+  if (value === null || value === undefined) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 // ── Date duplicate check ─────────────────────────────────────────
@@ -679,7 +697,7 @@ function renderMissingDays(sorted) {
   for (let i = 1; i <= 7; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const iso = d.toISOString().slice(0, 10);
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     if (!entryDates.has(iso)) {
       missing.push(iso);
     }

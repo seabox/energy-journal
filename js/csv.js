@@ -5,12 +5,15 @@ const NUMERIC_FIELDS = new Set([
   "sleepQuality",
   "fatigue",
   "exerciseMins",
+  "steps",
+  "moodAwareness",
   "focus",
   "play",
   "connecting",
   "physical",
   "reflect",
-  "down"
+  "down",
+  "nutrition"
 ]);
 
 const YN_FIELDS = new Set(["dayNap", "sleepFlag"]);

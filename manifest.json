@@ -1,7 +1,7 @@
 {
   "name": "Energy Journal",
   "short_name": "Energy Journal",
-  "description": "Track energy and fatigue, sync to OneDrive, and get practical insights.",
+  "description": "Track daily energy, fatigue, sleep, and wellbeing. Sync to OneDrive, Google Drive, or save locally. Get personalised insights based on the Healthy Mind Platter framework.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -10,16 +10,34 @@
   "theme_color": "#1db99a",
   "icons": [
     {
-      "src": "./icons/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "./icons/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "maskable"
+      "purpose": "any"
     }
   ]
 }
