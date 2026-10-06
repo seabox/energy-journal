@@ -69,14 +69,6 @@
             <td>Whether you napped during the day. Useful context when sleep quality is low or fatigue is unusually high or low.</td>
           </tr>
           <tr>
-            <td>Mood Awareness (0&ndash;10)</td>
-            <td>How present and self-aware you felt. 0&nbsp;= no self-awareness; 10&nbsp;= fully in the moment, clearly aware of your emotions and internal state. Based on mindfulness concepts in <a href="https://drdansiegel.com/mindsight/" target="_blank" rel="noopener">Dr Dan Siegel&rsquo;s mindsight work</a>.</td>
-          </tr>
-          <tr>
-            <td>Mood</td>
-            <td>A free-text label for how you felt &mdash; e.g. &ldquo;anxious&rdquo;, &ldquo;calm&rdquo;, &ldquo;irritable&rdquo;. Shown in the history table for quick review.</td>
-          </tr>
-          <tr>
             <td>Notes</td>
             <td>Anything worth remembering about the day &mdash; stressors, illness, travel, significant events. The more specific, the more useful the AI deep-dive becomes.</td>
           </tr>
@@ -116,8 +108,8 @@
             <td>Aerobic physical movement. Exercise releases BDNF (brain-derived neurotrophic factor), improving mood, focus, and long-term cognitive health. Auto-populated from Minutes Exercised.</td>
           </tr>
           <tr>
-            <td>Reflection</td>
-            <td>Internal reflection &mdash; journalling, meditation, prayer, or quiet contemplative time. Builds capacity for emotional balance and self-awareness by engaging the medial prefrontal cortex.</td>
+            <td>Reflection (Y/N)</td>
+            <td>Whether you spent time in internal reflection &mdash; journalling, meditation, prayer, or quiet contemplation. Yes is stored as 10 and No as 0. When editing historical scores, anything above 0 displays as Yes; the original score remains stored until you save.</td>
           </tr>
           <tr>
             <td>Downtime</td>
@@ -151,8 +143,10 @@
         <li><strong>Cloud sync &mdash; Google Drive</strong> &mdash; connect a Google account. Requires a Google Cloud project with the Drive API enabled and an OAuth2 client ID. Data is stored in your Drive&rsquo;s private app-data folder (not visible in the Drive UI).</li>
         <li><strong>Change storage</strong> &mdash; the &ldquo;Change storage&rdquo; link beneath the header lets you switch providers at any time. Your local entries are preserved.</li>
         <li><strong>Dark / light mode</strong> &mdash; toggle with the &#9728;&#65039;&nbsp;/&nbsp;&#127769; button in the header. Your preference is saved to <code>localStorage</code>.</li>
-        <li><strong>CSV export</strong> &mdash; download all entries as a spreadsheet-compatible CSV from the Recent Entries section.</li>
+        <li><strong>CSV export</strong> &mdash; download all entries as a spreadsheet-compatible CSV from the Recent Entries section. Formula-like text is prefixed with an apostrophe for spreadsheet safety; re-importing retains that prefix. JSON archives preserve original text.</li>
         <li><strong>CSV import</strong> &mdash; import a previously exported CSV to restore or merge entries across devices.</li>
+        <li><strong>Recent entries</strong> &mdash; shows today and the previous nine calendar days. Older entries remain saved, available for editing by choosing their date, and included in exports and insights.</li>
+        <li><strong>Archive</strong> &mdash; beside Import/Export, choose a cutoff date to save older entries as timestamped JSON and CSV files in your connected cloud app folder, then trim the active journal. Entries on the cutoff date stay active. Both archive uploads must succeed before removal; local-only mode cannot archive. Google Drive archives are private app data, not visible in its Drive UI. There is no in-app archive browser; export a local CSV first if you need an easily accessible copy.</li>
         <li><strong>Missing days indicator</strong> &mdash; orange badges appear above the history table for any of the last 7 days with no entry. Tap one to pre-fill that date.</li>
         <li><strong>Progressive Web App (PWA)</strong> &mdash; can be installed to your home screen on iOS/Android or as a desktop app via Chrome. Works offline once loaded.</li>
         <li><strong>No account required</strong> &mdash; this app has no server, no login, and no analytics. Cloud sync is entirely optional and uses only your own accounts.</li>
@@ -166,7 +160,6 @@
         <li><a href="https://www.who.int/news-room/fact-sheets/detail/physical-activity" target="_blank" rel="noopener">WHO Physical Activity Guidelines</a></li>
         <li><a href="https://www.nih.gov/news-events/nih-research-matters/number-steps-day-more-important-step-intensity" target="_blank" rel="noopener">NIH: Step count and mortality risk</a></li>
         <li><a href="https://www.sleepfoundation.org/how-sleep-works/stages-of-sleep" target="_blank" rel="noopener">Sleep Foundation: How sleep works</a></li>
-        <li><a href="https://drdansiegel.com/mindsight/" target="_blank" rel="noopener">Dr Dan Siegel: Mindsight &amp; mood awareness</a></li>
         <li><a href="https://neuroleadership.com" target="_blank" rel="noopener">NeuroLeadership Institute &mdash; David Rock</a></li>
       </ul>
     </section>

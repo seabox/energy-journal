@@ -43,7 +43,7 @@
       </div>
     </div>
     <button id="change-storage" class="change-storage-btn">Change storage</button>
-    <p id="sync-status" class="status">Not connected.</p>
+    <p id="sync-status" class="status" role="status">Not connected.</p>
   </header>
 
   <main class="grid">
@@ -70,13 +70,6 @@
             <label class="yn-opt"><input type="radio" name="dayNap" value="N" checked><span>N</span></label>
           </div>
         </div>
-        <label title="0 = not self aware at all, 10 = fully in the moment and aware of emotions and mood">Mood Awareness
-          <div class="slider-row">
-            <input type="range" name="moodAwareness" min="0" max="10" step="1" value="0" data-slider>
-            <span class="slider-value">0</span>
-          </div>
-        </label>
-        <label>Mood<input type="text" name="mood"></label>
         <fieldset class="full platter-group">
           <legend>Healthy Mind Platter <span class="platter-info" title="Adapted from The Healthy Mind Platter by Dr. Dan Siegel and David Rock, 2012">ⓘ</span></legend>
           <div class="platter-grid">
@@ -110,12 +103,13 @@
                 <span class="slider-value">1</span>
               </div>
             </label>
-            <label title="When we reflect internally, focusing on sensations, feelings and thoughts or pause for prayer or inner spiritual reflection, it helps build the brain&#39;s capacity for focus, emotional balance, and self-awareness">Reflection (time in/prayer)
-              <div class="slider-row">
-                <input type="range" name="reflect" min="0" max="10" step="1" value="1" data-slider>
-                <span class="slider-value">1</span>
+            <div class="field-group" title="When we reflect internally, focusing on sensations, feelings and thoughts or pause for prayer or inner spiritual reflection, it helps build the brain&#39;s capacity for focus, emotional balance, and self-awareness">
+              <span class="field-group-label">Reflection (time in/prayer)</span>
+              <div class="yn-toggle" role="group" aria-label="Reflection (time in/prayer)">
+                <label class="yn-opt"><input type="radio" name="reflect" value="10"><span>Y</span></label>
+                <label class="yn-opt"><input type="radio" name="reflect" value="0" checked><span>N</span></label>
               </div>
-            </label>
+            </div>
             <label title="When we are non-focused, without any specific goal, and let our mind wander or simply relax it helps the brain recharge and restore mental clarity">Downtime
               <div class="slider-row">
                 <input type="range" name="down" min="0" max="10" step="1" value="1" data-slider>
@@ -150,10 +144,11 @@
 
     <section class="panel panel-wide reveal" aria-labelledby="history-title">
       <div class="section-head">
-        <h2 id="history-title">Recent Entries</h2>
+        <h2 id="history-title">Recent Entries (last 10 days)</h2>
         <div class="section-actions">
           <label class="import-wrap">Import CSV<input id="import-csv" type="file" accept=".csv"></label>
           <button id="export-csv" class="btn btn-ghost btn-sm">Export CSV</button>
+          <button id="archive-entries" class="btn btn-ghost btn-sm" type="button">Archive</button>
         </div>
       </div>
       <div id="missing-days-wrap" hidden>
@@ -168,7 +163,6 @@
               <th>Fatigue</th>
               <th>Sleep</th>
               <th>Exercise</th>
-              <th>Mood</th>
               <th>Focus</th>
               <th>Notes</th>
               <th></th>
@@ -179,6 +173,22 @@
       </div>
     </section>
   </main>
+
+  <dialog id="archive-dialog" class="archive-dialog" aria-labelledby="archive-title" aria-describedby="archive-description">
+    <form id="archive-form">
+      <h2 id="archive-title">Archive older entries</h2>
+      <p id="archive-description">Save older entries as timestamped JSON and CSV files in your connected cloud app folder, then remove them from the active journal. Entries on the cutoff date stay active. Save any form changes first.</p>
+      <label>Archive entries before
+        <input id="archive-cutoff" type="date" required>
+      </label>
+      <p id="archive-preview" aria-live="polite"></p>
+      <p id="archive-status" class="status" role="status"></p>
+      <div class="section-actions">
+        <button id="archive-submit" class="btn btn-primary" type="submit" disabled>Archive to cloud</button>
+        <button id="archive-cancel" class="btn btn-ghost" type="button">Cancel</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="./js/vendor/msal-browser.min.js"></script>
   <script type="module" src="./js/app.js"></script>

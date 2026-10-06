@@ -168,6 +168,12 @@ export async function syncToOneDrive(payload) {
   await uploadFile(ONEDRIVE_FILES.json, JSON.stringify(payload.json, null, 2), "application/json", token);
 }
 
+export async function archiveToOneDrive(fileBase, payload) {
+  const token = await getAccessToken();
+  await uploadFile(`${fileBase}.json`, JSON.stringify(payload.json, null, 2), "application/json", token);
+  await uploadFile(`${fileBase}.csv`, payload.csv, "text/csv;charset=utf-8", token);
+}
+
 export async function pullFromOneDrive() {
   const token = await getAccessToken();
   const json = await downloadFile(ONEDRIVE_FILES.json, token);

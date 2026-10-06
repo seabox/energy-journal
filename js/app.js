@@ -1,9 +1,10 @@
-import { loadEntries, saveEntries } from "./storage-local.js";
+import { loadJournal, saveJournal } from "./storage-local.js";
+import { archiveJournal, journalPayload, mergeEntries, mergeJournals, splitArchive } from "./journal.js";
 import { entriesToCsv, parseCsv } from "./csv.js";
 import { buildInsights } from "./insights.js";
-import { connectOneDrive, getODDisplayName, initOneDrive, isODConnected, pullFromOneDrive, syncToOneDrive, wasODRedirectLogin } from "./storage-onedrive.js";
-import { connectGoogleDrive, getGDDisplayName, isGDConnected, pullFromGoogleDrive, reconnectGoogleDrive, syncToGoogleDrive } from "./storage-googledrive.js";
-import { isoDate, normalizeYN, sortEntriesByDateDesc, toNumberOrNull, uid } from "./utils.js";
+import { archiveToOneDrive, connectOneDrive, getODDisplayName, initOneDrive, isODConnected, pullFromOneDrive, syncToOneDrive, wasODRedirectLogin } from "./storage-onedrive.js";
+import { archiveToGoogleDrive, connectGoogleDrive, getGDDisplayName, isGDConnected, pullFromGoogleDrive, reconnectGoogleDrive, syncToGoogleDrive } from "./storage-googledrive.js";
+import { isoDate, normalizeYN, recentEntries, sortEntriesByDateDesc, toNumberOrNull, uid } from "./utils.js";
 import { STORAGE_PREF_KEY } from "./constants.js";
 
 const form = document.querySelector("#entry-form");
@@ -19,6 +20,13 @@ const connectGDBtn = document.querySelector("#connect-googledrive");
 const useLocalBtn = document.querySelector("#use-local");
 const changeStorageBtn = document.querySelector("#change-storage");
 const exportCsvBtn = document.querySelector("#export-csv");
+const archiveBtn = document.querySelector("#archive-entries");
+const archiveDialog = document.querySelector("#archive-dialog");
+const archiveForm = document.querySelector("#archive-form");
+const archiveCutoff = document.querySelector("#archive-cutoff");
+const archivePreview = document.querySelector("#archive-preview");
+const archiveSubmit = document.querySelector("#archive-submit");
+const archiveStatus = document.querySelector("#archive-status");
 const themeToggleBtn = document.querySelector("#theme-toggle");
 const dateInput = form.elements.namedItem("date");
 const dateWarningEl = document.querySelector("#date-warning");
@@ -29,18 +37,79 @@ const sliderInputs = [...document.querySelectorAll("input[data-slider]")];
 const sliderDefaults = {
   sleepQuality: "9",
   fatigue: "1",
-  moodAwareness: "0",
   focus: "1",
   play: "1",
   connecting: "1",
   physical: "1",
-  reflect: "1",
   down: "1",
   nutrition: "7"
 };
 
-let entries = loadEntries();
+let storedJournal;
+try {
+  storedJournal = loadJournal();
+} catch (error) {
+  setStatus("Could not read local journal. Existing data has been left untouched: " + error.message, true);
+  throw error;
+}
+let entries = storedJournal.entries;
+let archivedEntryIds = storedJournal.archivedEntryIds;
 let editId = null;
+let journalBusy = false;
+
+const cloudProviders = {
+  onedrive: { name: "OneDrive", connected: isODConnected, pull: pullFromOneDrive, push: syncToOneDrive, archive: archiveToOneDrive },
+  googledrive: { name: "Google Drive", connected: isGDConnected, pull: pullFromGoogleDrive, push: syncToGoogleDrive, archive: archiveToGoogleDrive }
+};
+
+function saveEntries(nextEntries) {
+  saveJournal({ entries: nextEntries, archivedEntryIds });
+}
+
+function applyJournal(journal) {
+  saveJournal(journal);
+  entries = journal.entries;
+  archivedEntryIds = journal.archivedEntryIds;
+  if (editId && !entries.some((entry) => entry.id === editId)) {
+    clearButton.click();
+    dateWarningEl.classList.remove("visible");
+  }
+  renderAll();
+}
+
+async function runJournalOperation(work) {
+  if (journalBusy) {
+    setStatus("Please wait for the current journal operation to finish.", true);
+    return;
+  }
+  journalBusy = true;
+  const hadArchiveDialog = archiveDialog.open;
+  document.querySelector("main").inert = true;
+  document.querySelector(".hero-actions").inert = true;
+  changeStorageBtn.disabled = true;
+  archiveForm.inert = true;
+  try {
+    await work();
+  } catch (error) {
+    setStatus(error.message || "Journal operation failed.", true);
+  } finally {
+    journalBusy = false;
+    document.querySelector("main").inert = false;
+    document.querySelector(".hero-actions").inert = false;
+    changeStorageBtn.disabled = false;
+    archiveForm.inert = false;
+    if (hadArchiveDialog && !archiveDialog.open) archiveBtn.focus();
+  }
+}
+
+async function syncCloud(pref, deletedId = null) {
+  const provider = cloudProviders[pref];
+  const remote = await provider.pull();
+  const next = mergeJournals({ entries, archivedEntryIds }, remote);
+  if (deletedId) next.entries = next.entries.filter((entry) => entry.id !== deletedId);
+  applyJournal(next);
+  await provider.push(journalPayload(next));
+}
 
 // ── Theme toggle (default dark from HTML attribute) ────────────────────
 /**
@@ -100,13 +169,7 @@ function setGDConnectedUI() {
 async function doOneDriveSync() {
   try {
     setStatus("Syncing with OneDrive…");
-    const remote = await pullFromOneDrive();
-    if (remote?.entries) {
-      entries = mergeEntries(entries, remote.entries);
-      saveEntries(entries);
-      renderAll();
-    }
-    await syncToOneDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
+    await syncCloud("onedrive");
     setStatus("OneDrive synced.");
   } catch (err) {
     setStatus("Connected but sync failed: " + (err.message || "unknown error"), true);
@@ -116,13 +179,7 @@ async function doOneDriveSync() {
 async function doGoogleDriveSync() {
   try {
     setStatus("Syncing with Google Drive…");
-    const remote = await pullFromGoogleDrive();
-    if (remote?.entries) {
-      entries = mergeEntries(entries, remote.entries);
-      saveEntries(entries);
-      renderAll();
-    }
-    await syncToGoogleDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
+    await syncCloud("googledrive");
     setStatus("Google Drive synced.");
   } catch (err) {
     setStatus("Connected but sync failed: " + (err.message || "unknown error"), true);
@@ -130,7 +187,8 @@ async function doGoogleDriveSync() {
 }
 
 // Always run initOneDrive to process any MSAL redirect response.
-initOneDrive().then(async (connected) => {
+runJournalOperation(async () => {
+  const connected = await initOneDrive();
   const currentPref = localStorage.getItem(STORAGE_PREF_KEY);
 
   if (connected && !currentPref && wasODRedirectLogin()) {
@@ -166,63 +224,65 @@ initOneDrive().then(async (connected) => {
   // No preference set — data-storage-pending keeps main hidden; all options visible.
 });
 
-form.addEventListener("submit", async (event) => {
+form.addEventListener("submit", (event) => {
   event.preventDefault();
-  const record = readForm();
-  if (!record.date) {
-    setStatus("Date is required.", true);
-    return;
-  }
-  if (!Number.isFinite(record.fatigue)) {
-    setStatus("Fatigue must be a number.", true);
-    return;
-  }
-
-  if (editId) {
-    entries = entries.map((entry) => (entry.id === editId ? { ...entry, ...record, id: editId, updatedAt: new Date().toISOString() } : entry));
-    // keep editId so further saves update the same entry
-  } else {
-    const newId = uid();
-    entries.push({ ...record, id: newId, updatedAt: new Date().toISOString() });
-    editId = newId; // lock subsequent saves to this entry
-  }
-
-  saveEntries(entries);
-  renderAll();
-
-  const activePref = localStorage.getItem(STORAGE_PREF_KEY);
-  if (activePref === "onedrive" && isODConnected()) {
-    try {
-      formStatusEl.textContent = "Syncing…";
-      formStatusEl.style.color = "var(--ink-soft)";
-      await syncToOneDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
-      formStatusEl.textContent = "Saved & synced \u2713";
-      formStatusEl.style.color = "var(--ok)";
-      setStatus("Synced to OneDrive.");
-    } catch (error) {
-      formStatusEl.textContent = "Saved locally (sync failed)";
-      formStatusEl.style.color = "var(--warn)";
-      setStatus("OneDrive sync failed: " + (error.message || "unknown error"), true);
+  return runJournalOperation(async () => {
+    const record = readForm();
+    if (!record.date) {
+      setStatus("Date is required.", true);
+      return;
     }
-  } else if (activePref === "googledrive" && isGDConnected()) {
-    try {
-      formStatusEl.textContent = "Syncing…";
-      formStatusEl.style.color = "var(--ink-soft)";
-      await syncToGoogleDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
-      formStatusEl.textContent = "Saved & synced \u2713";
-      formStatusEl.style.color = "var(--ok)";
-      setStatus("Synced to Google Drive.");
-    } catch (error) {
-      formStatusEl.textContent = "Saved locally (sync failed)";
-      formStatusEl.style.color = "var(--warn)";
-      setStatus("Google Drive sync failed: " + (error.message || "unknown error"), true);
+    if (!Number.isFinite(record.fatigue)) {
+      setStatus("Fatigue must be a number.", true);
+      return;
     }
-  } else {
-    formStatusEl.textContent = "Saved locally \u2713";
-    formStatusEl.style.color = "var(--ok)";
-    setStatus("Entry saved locally.");
-  }
-  setTimeout(() => { formStatusEl.textContent = ""; }, 4000);
+
+    if (editId) {
+      entries = entries.map((entry) => (entry.id === editId ? { ...entry, ...record, id: editId, updatedAt: new Date().toISOString() } : entry));
+      // keep editId so further saves update the same entry
+    } else {
+      const newId = uid();
+      entries.push({ ...record, id: newId, updatedAt: new Date().toISOString() });
+      editId = newId; // lock subsequent saves to this entry
+    }
+
+    saveEntries(entries);
+    renderAll();
+
+    const activePref = localStorage.getItem(STORAGE_PREF_KEY);
+    if (activePref === "onedrive" && isODConnected()) {
+      try {
+        formStatusEl.textContent = "Syncing…";
+        formStatusEl.style.color = "var(--ink-soft)";
+        await syncCloud("onedrive");
+        formStatusEl.textContent = "Saved & synced \u2713";
+        formStatusEl.style.color = "var(--ok)";
+        setStatus("Synced to OneDrive.");
+      } catch (error) {
+        formStatusEl.textContent = "Saved locally (sync failed)";
+        formStatusEl.style.color = "var(--warn)";
+        setStatus("OneDrive sync failed: " + (error.message || "unknown error"), true);
+      }
+    } else if (activePref === "googledrive" && isGDConnected()) {
+      try {
+        formStatusEl.textContent = "Syncing…";
+        formStatusEl.style.color = "var(--ink-soft)";
+        await syncCloud("googledrive");
+        formStatusEl.textContent = "Saved & synced \u2713";
+        formStatusEl.style.color = "var(--ok)";
+        setStatus("Synced to Google Drive.");
+      } catch (error) {
+        formStatusEl.textContent = "Saved locally (sync failed)";
+        formStatusEl.style.color = "var(--warn)";
+        setStatus("Google Drive sync failed: " + (error.message || "unknown error"), true);
+      }
+    } else {
+      formStatusEl.textContent = "Saved locally \u2713";
+      formStatusEl.style.color = "var(--ok)";
+      setStatus("Entry saved locally.");
+    }
+    setTimeout(() => { formStatusEl.textContent = ""; }, 4000);
+  });
 });
 
 clearButton.addEventListener("click", () => {
@@ -234,7 +294,7 @@ clearButton.addEventListener("click", () => {
   refreshSliderDisplays();
 });
 
-importInput.addEventListener("change", async (event) => {
+importInput.addEventListener("change", (event) => runJournalOperation(async () => {
   const file = event.target.files?.[0];
   if (!file) {
     return;
@@ -251,9 +311,9 @@ importInput.addEventListener("change", async (event) => {
   renderAll();
   setStatus(`Imported ${imported.length} rows.`);
   importInput.value = "";
-});
+}));
 
-connectBtn.addEventListener("click", async () => {
+connectBtn.addEventListener("click", () => runJournalOperation(async () => {
   try {
     setStatus("Redirecting to Microsoft sign-in...");
     await connectOneDrive();
@@ -261,9 +321,9 @@ connectBtn.addEventListener("click", async () => {
   } catch (error) {
     setStatus(error.message || "OneDrive connection failed.", true);
   }
-});
+}));
 
-connectGDBtn.addEventListener("click", async () => {
+connectGDBtn.addEventListener("click", () => runJournalOperation(async () => {
   const currentPref = localStorage.getItem(STORAGE_PREF_KEY);
   const isReconnect = currentPref === "googledrive";
   connectGDBtn.disabled = true;
@@ -285,7 +345,7 @@ connectGDBtn.addEventListener("click", async () => {
       : "Connect Google Drive";
     setStatus(err.message || "Google Drive connection failed.", true);
   }
-});
+}));
 
 useLocalBtn.addEventListener("click", () => {
   setStoragePref("local");
@@ -312,6 +372,65 @@ exportCsvBtn.addEventListener("click", () => {
   URL.revokeObjectURL(link.href);
 });
 
+archiveBtn.addEventListener("click", () => {
+  const provider = cloudProviders[localStorage.getItem(STORAGE_PREF_KEY)];
+  if (!provider?.connected()) {
+    setStatus("Connect or reconnect OneDrive or Google Drive before archiving. Local-only storage cannot save cloud archives.", true);
+    return;
+  }
+  archiveStatus.textContent = "";
+  updateArchivePreview();
+  archiveDialog.showModal();
+});
+
+function updateArchivePreview() {
+  archiveSubmit.disabled = true;
+  if (!archiveCutoff.value) {
+    archivePreview.textContent = "Choose a date. Entries on or after that date will stay active.";
+    return;
+  }
+  try {
+    const { archived, retained } = splitArchive(entries, archiveCutoff.value);
+    archivePreview.textContent = `${archived.length} local entries to archive; ${retained.length} to keep. Cloud entries will also be checked before confirmation.`;
+    archiveSubmit.disabled = false;
+  } catch (error) {
+    archivePreview.textContent = error.message;
+  }
+}
+
+archiveCutoff.addEventListener("input", updateArchivePreview);
+document.querySelector("#archive-cancel").addEventListener("click", () => archiveDialog.close());
+archiveDialog.addEventListener("cancel", (event) => {
+  if (journalBusy) event.preventDefault();
+});
+
+archiveForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  return runJournalOperation(async () => {
+    const provider = cloudProviders[localStorage.getItem(STORAGE_PREF_KEY)];
+    if (!provider?.connected()) throw new Error("Reconnect your cloud storage before archiving.");
+    const cutoff = archiveCutoff.value;
+    setStatus(`Checking ${provider.name} before archiving...`);
+    const remote = await provider.pull();
+    const current = mergeJournals({ entries, archivedEntryIds }, remote);
+    const { archived, retained } = splitArchive(current.entries, cutoff);
+    if (!archived.length) throw new Error("No entries before the selected date to archive.");
+    if (!confirm(`Archive ${archived.length} entries before ${cutoff} to ${provider.name} and keep ${retained.length} active entries? JSON and CSV archive files will be saved before entries are removed. Save any unsaved form changes before proceeding.`)) {
+      setStatus("Archive cancelled. No files or entries were changed.");
+      return;
+    }
+    setStatus(`Saving archive to ${provider.name}. Keep this page open...`);
+    const result = await archiveJournal(current, cutoff, provider);
+    try {
+      applyJournal(result.journal);
+    } catch (error) {
+      throw new Error(`Archive ${result.fileBase} and the trimmed journal were saved to ${provider.name}, but updating this device failed. Reload to reconcile with the cloud. ${error.message}`);
+    }
+    archiveDialog.close();
+    setStatus(`Archived ${result.count} entries to ${provider.name} as ${result.fileBase}.json and .csv. ${entries.length} entries remain active.`);
+  });
+});
+
 // Auto-set Physical (Exercise) slider from minutes exercised
 const exerciseMinsInput = form.elements.namedItem("exerciseMins");
 const physicalSlider = form.elements.namedItem("physical");
@@ -328,7 +447,7 @@ document.querySelector("#deep-insights").addEventListener("click", () => {
     return;
   }
   const sorted = sortEntriesByDateDesc(entries).slice(0, 21);
-  const header = "Date\tFatigue\tSleep\tEx.Mins\tEx.Type\tNap\tMoodAwareness\tMood\tFocus\tPlaytime\tConnecting\tPhysical\tReflection\tDowntime\tNotes";
+  const header = "Date\tFatigue\tSleep\tEx.Mins\tEx.Type\tNap\tFocus\tPlaytime\tConnecting\tPhysical\tReflection\tDowntime\tNotes";
   const rows = sorted.map((e) => [
     e.date || "",
     e.fatigue ?? "",
@@ -336,8 +455,6 @@ document.querySelector("#deep-insights").addEventListener("click", () => {
     e.exerciseMins ?? "",
     e.exerciseType || "",
     e.dayNap || "",
-    e.moodAwareness ?? "",
-    e.mood || "",
     e.focus ?? "",
     e.play ?? "",
     e.connecting ?? "",
@@ -357,13 +474,11 @@ I track daily fatigue and lifestyle factors using the Healthy Mind Platter frame
 - **Sleep Quality** (0\u201310): 0\u202f= terrible, 10\u202f= excellent, refreshing sleep
 - **Exercise mins**: Minutes of physical activity that day
 - **Nap**: Daytime nap taken (Y/N)
-- **Mood Awareness** (0\u201310): 0\u202f= no self-awareness, 10\u202f= fully present and aware of emotions
-- **Mood**: Qualitative mood description
 - **Focus time** (0\u201310): Goal-oriented focused task time
 - **Playtime** (0\u201310): Spontaneous, creative, or playful activity
 - **Connecting** (0\u201310): Time connecting with people or nature
 - **Physical** (0\u201310): Aerobic body movement / exercise intensity
-- **Reflection** (0\u201310): Mindful internal reflection
+- **Reflection**: Mindful internal reflection (0 = No, 10 = Yes; historical entries may use a 0\u201310 scale)
 - **Downtime** (0\u201310): Non-focused rest, mind-wandering, relaxing
 - **Notes**: Free text notes about the day
 
@@ -402,39 +517,49 @@ function renderAll() {
 }
 
 /**
- * Renders up to 60 entries into the history table.
- * Shows an empty-state row when there are no entries.
+ * Renders entries from today and the previous nine local calendar days.
+ * Shows an empty-state row when there are no recent entries.
  * @param {object[]} sorted - Entries sorted newest-first.
  */
 function renderEntries(sorted) {
+  const visible = recentEntries(sorted);
   body.innerHTML = "";
-  if (!sorted.length) {
-    body.innerHTML = `<tr><td colspan="8">No entries yet. Add one above or import your CSV.</td></tr>`;
+  if (!visible.length) {
+    body.innerHTML = `<tr><td colspan="7">No entries in the last 10 days. Older entries remain saved and included in exports.</td></tr>`;
     return;
   }
 
   const fragment = document.createDocumentFragment();
-  for (const entry of sorted.slice(0, 60)) {
+  for (const entry of visible) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${entry.date ? new Date(entry.date + "T00:00:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" }) : ""}</td>
       <td>${safe(entry.fatigue)}</td>
       <td>${safe(entry.sleepQuality)}</td>
       <td>${safe(entry.exerciseMins)} ${safe(entry.exerciseType)}</td>
-      <td>${safe(entry.mood)}</td>
       <td>${safe(entry.focus)}</td>
       <td>${safe(entry.notes)}</td>
-      <td>
-        <button class="btn-table" data-action="edit" data-id="${entry.id}" aria-label="Edit entry for ${safe(entry.date)}">Edit</button>
-        <button class="btn-table" data-action="delete" data-id="${entry.id}" aria-label="Delete entry for ${safe(entry.date)}">Delete</button>
-      </td>
+      <td></td>
     `;
+    const actions = tr.lastElementChild;
+    for (const action of ["edit", "delete"]) {
+      const button = document.createElement("button");
+      const label = action === "edit" ? "Edit" : "Delete";
+      button.type = "button";
+      button.className = "btn-table";
+      button.dataset.action = action;
+      button.dataset.id = entry.id;
+      button.textContent = label;
+      button.setAttribute("aria-label", `${label} entry for ${entry.date || ""}`);
+      actions.appendChild(button);
+    }
     fragment.appendChild(tr);
   }
   body.appendChild(fragment);
 }
 
-body.addEventListener("click", async (event) => {
+body.addEventListener("click", (event) => {
+  if (journalBusy) return;
   const button = event.target.closest("button[data-action]");
   if (!button) {
     return;
@@ -443,34 +568,35 @@ body.addEventListener("click", async (event) => {
   const action = button.dataset.action;
 
   if (action === "delete") {
-    const target = entries.find((entry) => entry.id === id);
-    const label = target?.date ? new Date(target.date + "T00:00:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" }) : "this entry";
-    if (!confirm(`Delete the entry for ${label}? This cannot be undone.`)) return;
-    entries = entries.filter((entry) => entry.id !== id);
-    saveEntries(entries);
-    renderAll();
+    return runJournalOperation(async () => {
+      const target = entries.find((entry) => entry.id === id);
+      const label = target?.date ? new Date(target.date + "T00:00:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" }) : "this entry";
+      if (!confirm(`Delete the entry for ${label}? This cannot be undone.`)) return;
+      entries = entries.filter((entry) => entry.id !== id);
+      saveEntries(entries);
+      renderAll();
 
-    const activePref = localStorage.getItem(STORAGE_PREF_KEY);
-    if (activePref === "onedrive" && isODConnected()) {
-      try {
-        setStatus("Syncing deletion to OneDrive…");
-        await syncToOneDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
-        setStatus("Entry deleted & synced to OneDrive.");
-      } catch (err) {
-        setStatus("Deleted locally (OneDrive sync failed): " + (err.message || "unknown error"), true);
+      const activePref = localStorage.getItem(STORAGE_PREF_KEY);
+      if (activePref === "onedrive" && isODConnected()) {
+        try {
+          setStatus("Syncing deletion to OneDrive…");
+          await syncCloud("onedrive", id);
+          setStatus("Entry deleted & synced to OneDrive.");
+        } catch (err) {
+          setStatus("Deleted locally (OneDrive sync failed): " + (err.message || "unknown error"), true);
+        }
+      } else if (activePref === "googledrive" && isGDConnected()) {
+        try {
+          setStatus("Syncing deletion to Google Drive…");
+          await syncCloud("googledrive", id);
+          setStatus("Entry deleted & synced to Google Drive.");
+        } catch (err) {
+          setStatus("Deleted locally (Google Drive sync failed): " + (err.message || "unknown error"), true);
+        }
+      } else {
+        setStatus("Entry deleted.");
       }
-    } else if (activePref === "googledrive" && isGDConnected()) {
-      try {
-        setStatus("Syncing deletion to Google Drive…");
-        await syncToGoogleDrive({ json: { updatedAt: new Date().toISOString(), entries: sortEntriesByDateDesc(entries) } });
-        setStatus("Entry deleted & synced to Google Drive.");
-      } catch (err) {
-        setStatus("Deleted locally (Google Drive sync failed): " + (err.message || "unknown error"), true);
-      }
-    } else {
-      setStatus("Entry deleted.");
-    }
-    return;
+    });
   }
 
   if (action === "edit") {
@@ -520,13 +646,11 @@ function readForm() {
     exerciseType: String(data.get("exerciseType") || "").trim(),
     steps: toNumberOrNull(data.get("steps")),
     dayNap: normalizeYN(data.get("dayNap")),
-    moodAwareness: toNumberOrNull(data.get("moodAwareness")),
-    mood: String(data.get("mood") || "").trim(),
     focus: toNumberOrNull(data.get("focus")),
     play: toNumberOrNull(data.get("play")),
     connecting: toNumberOrNull(data.get("connecting")),
     physical: toNumberOrNull(data.get("physical")),
-    reflect: toNumberOrNull(data.get("reflect")),
+    reflect: data.get("reflect") === "10" ? 10 : 0,
     down: toNumberOrNull(data.get("down")),
     nutrition: toNumberOrNull(data.get("nutrition")),
     notes: String(data.get("notes") || "").trim()
@@ -539,39 +663,15 @@ function readForm() {
  * @param {object} entry - The entry record to write into the form.
  */
 function writeForm(entry) {
+  form.elements.namedItem("reflect").value = Number(entry.reflect) > 0 ? "10" : "0";
   for (const [key, value] of Object.entries(entry)) {
+    if (key === "reflect") continue;
     const el = form.elements.namedItem(key);
     if (!el) {
       continue;
     }
     el.value = value ?? "";
   }
-}
-
-/**
- * Merges two entry arrays, deduplicating by id and keeping whichever
- * copy has the more-recent updatedAt timestamp. Entries without an id
- * are assigned a temporary id derived from their date.
- * @param {object[]} base - Existing local entries.
- * @param {object[]} incoming - Entries to merge in (e.g. from CSV or OneDrive).
- * @returns {object[]} Merged array with no duplicate ids.
- */
-function mergeEntries(base, incoming) {
-  const byId = new Map();
-  for (const item of [...base, ...incoming]) {
-    const id = item.id || `${item.date}-${Math.random().toString(16).slice(2, 6)}`;
-    const existing = byId.get(id);
-    if (!existing) {
-      byId.set(id, { ...item, id });
-      continue;
-    }
-    const existingStamp = existing.updatedAt ? Date.parse(existing.updatedAt) : 0;
-    const incomingStamp = item.updatedAt ? Date.parse(item.updatedAt) : 0;
-    if (incomingStamp >= existingStamp) {
-      byId.set(id, { ...existing, ...item, id });
-    }
-  }
-  return [...byId.values()];
 }
 
 /**
@@ -582,6 +682,10 @@ function mergeEntries(base, incoming) {
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
   statusEl.style.color = isError ? "var(--warn)" : "var(--ok)";
+  if (archiveDialog.open) {
+    archiveStatus.textContent = text;
+    archiveStatus.style.color = isError ? "var(--warn)" : "var(--ok)";
+  }
 }
 
 /**

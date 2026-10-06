@@ -121,28 +121,37 @@ export async function syncToGoogleDrive(payload) {
     });
     if (!res.ok) throw new Error("Google Drive update failed.");
   } else {
-    const metadata = JSON.stringify({ name: FILE_NAME, parents: ["appDataFolder"] });
-    const boundary = "ejboundary";
-    const body = [
-      `--${boundary}`,
-      "Content-Type: application/json",
-      "",
-      metadata,
-      `--${boundary}`,
-      "Content-Type: application/json",
-      "",
-      content,
-      `--${boundary}--`
-    ].join("\r\n");
-    const res = await authedFetch(`${UPLOAD_API}?uploadType=multipart`, {
-      method: "POST",
-      headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
-      body
-    });
-    if (!res.ok) throw new Error("Google Drive create failed.");
-    const created = await res.json();
+    const created = await createFile(FILE_NAME, content, "application/json");
     cachedFileId = created.id;
   }
+}
+
+async function createFile(name, content, contentType) {
+  const metadata = JSON.stringify({ name, parents: ["appDataFolder"] });
+  const boundary = `ejboundary-${crypto.randomUUID()}`;
+  const body = [
+    `--${boundary}`,
+    "Content-Type: application/json",
+    "",
+    metadata,
+    `--${boundary}`,
+    `Content-Type: ${contentType}`,
+    "",
+    content,
+    `--${boundary}--`
+  ].join("\r\n");
+  const res = await authedFetch(`${UPLOAD_API}?uploadType=multipart`, {
+    method: "POST",
+    headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+    body
+  });
+  if (!res.ok) throw new Error(`Google Drive create failed for ${name} (HTTP ${res.status}).`);
+  return res.json();
+}
+
+export async function archiveToGoogleDrive(fileBase, payload) {
+  await createFile(`${fileBase}.json`, JSON.stringify(payload.json, null, 2), "application/json");
+  await createFile(`${fileBase}.csv`, payload.csv, "text/csv;charset=utf-8");
 }
 
 export async function pullFromGoogleDrive() {

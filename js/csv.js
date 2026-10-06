@@ -1,5 +1,5 @@
 import { CSV_HEADERS, FIELD_MAP } from "./constants.js";
-import { normalizeYN, toNumberOrNull, isoDate } from "./utils.js";
+import { escapeCsvValue, normalizeYN, toNumberOrNull, isoDate } from "./utils.js";
 
 const NUMERIC_FIELDS = new Set([
   "sleepQuality",
@@ -24,7 +24,7 @@ export function entriesToCsv(entries) {
     const row = CSV_HEADERS.map((header) => {
       const key = Object.keys(FIELD_MAP).find((fieldKey) => FIELD_MAP[fieldKey] === header);
       const value = key ? entry[key] : "";
-      return escapeValue(value);
+      return escapeCsvValue(value);
     });
     lines.push(row.join(","));
   }
@@ -64,14 +64,6 @@ export function parseCsv(text) {
   }
 
   return entries;
-}
-
-function escapeValue(value) {
-  const str = value === null || value === undefined ? "" : String(value);
-  if (str.includes(",") || str.includes("\n") || str.includes("\"")) {
-    return `"${str.replaceAll("\"", "\"\"")}"`;
-  }
-  return str;
 }
 
 function parseRows(text) {

@@ -150,6 +150,7 @@ p {
 }
 
 .status {
+  overflow-wrap: anywhere;
   margin-top: 0.65rem;
   font-size: 0.92rem;
   color: var(--ink-soft);
@@ -433,6 +434,19 @@ label[title] {
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.archive-dialog {
+  width: min(32rem, calc(100% - 2rem));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.5rem;
+  color: var(--ink);
+  background: var(--panel);
+}
+
+.archive-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
 }
 
 .import-wrap {

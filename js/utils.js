@@ -54,6 +54,15 @@ export function sortEntriesByDateDesc(entries) {
   return [...entries].sort((a, b) => b.date.localeCompare(a.date));
 }
 
+export function recentEntries(entries, now = new Date()) {
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 9);
+  const localDate = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const firstDate = localDate(start);
+  const lastDate = localDate(now);
+  return entries.filter((entry) => /^\d{4}-\d{2}-\d{2}$/.test(entry.date) &&
+    entry.date >= firstDate && entry.date <= lastDate);
+}
+
 export function average(values) {
   if (!values.length) {
     return null;
@@ -63,8 +72,12 @@ export function average(values) {
 }
 
 export function escapeCsvValue(value) {
-  const str = value === null || value === undefined ? "" : String(value);
-  if (str.includes(",") || str.includes("\n") || str.includes("\"")) {
+  let str = value === null || value === undefined ? "" : String(value);
+  // CSV quoting does not prevent spreadsheet formulas; keep numeric cells numeric.
+  if (typeof value !== "number" && (/^[\u0000-\u0020\uFEFF]*[=+\-@]/.test(str) || /^[\t\r\n]/.test(str))) {
+    str = "'" + str;
+  }
+  if (str.includes(",") || str.includes("\n") || str.includes("\r") || str.includes("\"")) {
     return `"${str.replaceAll("\"", "\"\"")}"`;
   }
   return str;
